@@ -1,0 +1,8 @@
+# Copy this file to local.toml and edit the values. local.toml is
+# ignored by git.
+
+# Root of a MAME git repository.
+mame_dir = "C:/mame-mirror"
+
+# Tag or commit hash to read the drivers from.
+mame_rev = "mame0289"
