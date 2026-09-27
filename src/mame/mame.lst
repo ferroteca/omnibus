@@ -1,0 +1,19 @@
+// license:BSD-3-Clause
+// Written by import-mame/import_mame.py from MAME mame0289 (f34f02505e32).
+// Do not edit by hand; run the script again instead.
+
+@source:heathzenith/h8.cpp
+h8
+
+@source:heathzenith/h89.cpp
+h88
+h89
+h89_cdr
+h89_mms
+z90
+
+@source:mits/al8800b.cpp
+al8800b
+
+@source:mits/altair.cpp
+al8800bt
