@@ -280,10 +280,20 @@ TARGET := mame
 endif
 
 ifndef SUBTARGET
-SUBTARGET := $(TARGET)
+SUBTARGET := omnibus
 endif
 
 SUBTARGET_FULL := $(subst -,_,$(SUBTARGET))
+
+# the omnibus subtarget builds through its filter file so the binary is
+# named omnibus rather than mameomnibus (see mainProject in scripts/src/main.lua)
+ifeq ($(SUBTARGET_FULL),omnibus)
+ifndef SOURCES
+ifndef SOURCEFILTER
+SOURCEFILTER := src/mame/omnibus.flt
+endif
+endif
+endif
 
 
 CONFIG = release
@@ -1042,7 +1052,7 @@ else
 OLD_GIT_VERSION := $(shell cat $(GENDIR)/git_desc 2> NUL)
 endif
 ifneq ($(IGNORE_GIT),1)
-NEW_GIT_VERSION := $(shell git describe --dirty)
+NEW_GIT_VERSION := $(shell git describe --tags --dirty --match "omnibus-*")
 else
 NEW_GIT_VERSION := unknown
 endif
@@ -1510,24 +1520,24 @@ endif
 
 ifeq (posix,$(SHELLTYPE))
 $(GENDIR)/version.cpp: makefile $(GENDIR)/git_desc | $(GEN_FOLDERS)
-	@echo '#define BARE_BUILD_VERSION "0.289"' > $@
+	@echo '#define BARE_BUILD_VERSION "0.0.1"' > $@
 	@echo '#define BARE_VCS_REVISION "$(NEW_GIT_VERSION)"' >> $@
 	@echo 'extern const char bare_build_version[];' >> $@
 	@echo 'extern const char bare_vcs_revision[];' >> $@
 	@echo 'extern const char build_version[];' >> $@
 	@echo 'const char bare_build_version[] = BARE_BUILD_VERSION;' >> $@
 	@echo 'const char bare_vcs_revision[] = BARE_VCS_REVISION;' >> $@
-	@echo 'const char build_version[] = BARE_BUILD_VERSION " (" BARE_VCS_REVISION ")";' >> $@
+	@echo 'const char build_version[] = BARE_BUILD_VERSION;' >> $@
 else
 $(GENDIR)/version.cpp: makefile $(GENDIR)/git_desc | $(GEN_FOLDERS)
-	@echo #define BARE_BUILD_VERSION "0.289" > $@
+	@echo #define BARE_BUILD_VERSION "0.0.1" > $@
 	@echo #define BARE_VCS_REVISION "$(NEW_GIT_VERSION)" >> $@
 	@echo extern const char bare_build_version[]; >> $@
 	@echo extern const char bare_vcs_revision[]; >> $@
 	@echo extern const char build_version[]; >> $@
 	@echo const char bare_build_version[] = BARE_BUILD_VERSION; >> $@
 	@echo const char bare_vcs_revision[] = BARE_VCS_REVISION; >> $@
-	@echo const char build_version[] = BARE_BUILD_VERSION " (" BARE_VCS_REVISION ")"; >> $@
+	@echo const char build_version[] = BARE_BUILD_VERSION; >> $@
 endif
 
 

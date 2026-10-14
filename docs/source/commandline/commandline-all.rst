@@ -2191,7 +2191,7 @@ Core Video Options
 
     Run MAME in either a window or full screen.
 
-    The default is OFF (**-nowindow**).
+    The default is ON (**-window**).
 
     Example:
         .. code-block:: bash
@@ -2209,7 +2209,7 @@ Core Video Options
     non-square pixels are used. This option only has an effect when the
     **-window** option is used.
 
-    The default is ON (**-maximize**).
+    The default is OFF (**-nomaximize**).
 
     Example:
         .. code-block:: bash
