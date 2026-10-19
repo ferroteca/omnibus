@@ -119,18 +119,21 @@ class menu_select_rw : public menu
 public:
 	enum class result
 	{
-		READONLY = 0x3000,
-		READWRITE,
-		WRITE_OTHER,
+		WRITE_MEMORY = 0x3000, // writes stay in memory, nothing is saved
+		READWRITE,             // writes are saved to the image
+		WRITE_OTHER,           // writes are saved to a new image
 		WRITE_DIFF
 	};
 
-	using handler_function = std::function<void (result result)>;
+	// write_protect is the state of the "Write protect" option when the
+	// user chose the access mode.
+	using handler_function = std::function<void (result result, bool write_protect)>;
 
 	menu_select_rw(
 			mame_ui_manager &mui,
 			render_target &target,
 			bool can_in_place,
+			bool write_protect,
 			handler_function &&handler);
 	virtual ~menu_select_rw() override;
 
@@ -144,6 +147,7 @@ private:
 	// internal state
 	handler_function const  m_handler;
 	bool const              m_can_in_place;
+	bool                    m_write_protect;
 };
 
 } // namespace ui

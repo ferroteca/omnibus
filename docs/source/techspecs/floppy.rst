@@ -236,6 +236,8 @@ Unformatted tracks are encoded as zero-size.
 
 The "track splice" information indicates where to start writing if you try to rewrite a physical disk with the data.  Some preservation formats encode that information, it is guessed for others.  The write track function of fdcs should set it.  The representation is the angular position relative to the index.
 
+The write protect flag records that the image file says the disk is write protected.  A format's load() sets it when its file carries such a flag.  The floppy drive then marks the image read-only and reports write protect.
+
 3.2. Converting to and from the internal representation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -249,7 +251,7 @@ We need to be able to convert on-disk formats of the floppy data to and from the
 
 - **extensions()** gives a comma-separated list of file name extensions found for that format
 
-- **supports_save()** returns true is converting to that external format is supported
+- **supports_save()** returns true is converting to that external format is supported.  When it returns false, writes never reach the file.  The drive's "Image without save support" setting in the Machine Configuration menu then chooses between "Nonpersistent", where the software can write but the changes are dropped at unload (the default, and the same meaning as the file manager's "Write to memory only" access mode), and "Write protected".  In the file manager, the setting is the starting state of the "Write protect" option for such a format.
 
 - **identify(file, form factor)** gives a 0-100 score for the file to be of that format:
 
@@ -376,7 +378,7 @@ A number of methods are provided to simplify writing the converter classes.
 
 **wpt_r() / setup_wpt_cb(cb)**
 
-  Write protect signal (1 = readonly).  Callback is unsynchronized.
+  Write protect signal (1 = readonly).  Callback is unsynchronized.  The signal is 1 when the image file could not be opened for writing, when a software list marks the item write_protected, when the image file's own write protect flag is set and the file manager did not clear it, when the image was loaded with the file manager's "Write protect" option on, or when the format has no save(), no access mode was chosen, and the drive's "Image without save support" setting is "Write protected".
 
 
 **dskchg_r()**

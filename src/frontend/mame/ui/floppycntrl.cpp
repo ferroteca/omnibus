@@ -33,7 +33,9 @@ menu_control_floppy_image::menu_control_floppy_image(mame_ui_manager &mui, rende
 	m_output_format(nullptr),
 	m_create_fs(nullptr),
 	m_input_filename(),
-	m_output_filename()
+	m_output_filename(),
+	m_write_protect(false),
+	m_apply_write_protect(false)
 {
 }
 
@@ -173,6 +175,11 @@ bool menu_control_floppy_image::do_load_create()
 			machine().popmessage(_("Error opening floppy image: %1$s"), !message.empty() ? message : err.message());
 			return false;
 		}
+
+		// Set the write protect line, and the image's own flag, before
+		// setup_write() saves the image.
+		if (m_apply_write_protect)
+			m_fd.set_write_protect(m_write_protect);
 	}
 	if (m_output_format)
 		m_fd.setup_write(m_output_format);
@@ -184,6 +191,7 @@ bool menu_control_floppy_image::hook_load(const std::string &filename)
 	m_input_filename = filename;
 	m_output_filename.clear();
 	m_output_format = nullptr;
+	m_apply_write_protect = false;
 	std::error_condition err;
 	std::tie(err, m_input_format) = static_cast<floppy_image_device &>(m_image).identify(filename);
 	if (!m_input_format)
@@ -203,15 +211,24 @@ bool menu_control_floppy_image::hook_load(const std::string &filename)
 			can_in_place = false;
 	}
 
+	// The "Write protect" option starts from the image's own flag, or from
+	// the drive's "Image without save support" setting for a format
+	// without save().
+	bool const write_protect = m_fd.default_write_protect(filename, *m_input_format);
+
 	menu::stack_push<menu_select_rw>(
 			ui(),
 			target(),
 			can_in_place,
-			[this] (menu_select_rw::result result)
+			write_protect,
+			[this] (menu_select_rw::result result, bool write_protect)
 			{
+				m_write_protect = write_protect;
+				m_apply_write_protect = true;
+
 				switch (result)
 				{
-				case menu_select_rw::result::READONLY:
+				case menu_select_rw::result::WRITE_MEMORY:
 					{
 						stack_pop(); // pop the access mode menu
 						bool const result = do_load_create();
@@ -255,6 +272,7 @@ bool menu_control_floppy_image::hook_create(std::string_view path)
 {
 	m_input_format = nullptr;
 	m_input_filename.clear();
+	m_apply_write_protect = false;
 	menu::stack_push<menu_select_format>(
 			ui(),
 			target(),

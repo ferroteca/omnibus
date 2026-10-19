@@ -596,6 +596,15 @@ public:
 	//! @param s the sectoring.
 	void set_sectoring(uint32_t s) { sectoring = s; }
 
+	//! @return true when the image file says the disk is write protected.
+	bool is_write_protected() const noexcept { return write_protected; }
+	//! A format's load() calls this when the image file carries a write
+	//! protect flag.  floppy_image_device then marks the image read-only, so
+	//! the drive reports write protect and nothing is written back.  Formats
+	//! whose files have no such flag leave it false.
+	//! @param wp true for write protected.
+	void set_write_protected(bool wp) noexcept { write_protected = wp; }
+
 	//! Find most recent and next index hole for provided angular position.
 	//! The most recent hole may be equal to provided position. The next
 	//! hole will be 200000000 if all holes of the current rotation are in
@@ -653,6 +662,7 @@ private:
 	int tracks, heads;
 
 	uint32_t form_factor, variant, sectoring;
+	bool write_protected = false;
 
 	struct track_info
 	{

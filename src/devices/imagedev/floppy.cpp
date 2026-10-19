@@ -270,6 +270,32 @@ floppy_image_device *floppy_connector::get_device()
 }
 
 //-------------------------------------------------
+//  configuration
+//-------------------------------------------------
+
+// A format without save() can never write the image back.  This setting
+// decides what the software sees in that case.  "Nonpersistent" is a
+// writable disk whose changes are dropped at unload, like the file
+// manager's "Write to memory only": the default, and what every format
+// without save() did before the setting existed.  "Write protected" is a
+// disk the software cannot write.  In the file manager the setting is the
+// starting state of the "Write protect" option.  The setting does not
+// apply when the image file is read-only, when a software list marks the
+// item write_protected, or when the image file's own write protect flag is
+// set: those always give a write protected disk.
+INPUT_PORTS_START(floppy_image_device)
+	PORT_START("UNSAVED")
+	PORT_CONFNAME(0x01, 0x00, "Image without save support") PORT_CHANGED_MEMBER(DEVICE_SELF, FUNC(floppy_image_device::unsaved_writes_changed), 0)
+	PORT_CONFSETTING(0x00, "Nonpersistent")
+	PORT_CONFSETTING(0x01, "Write protected")
+INPUT_PORTS_END
+
+ioport_constructor floppy_image_device::device_input_ports() const
+{
+	return INPUT_PORTS_NAME(floppy_image_device);
+}
+
+//-------------------------------------------------
 //  floppy_image_device - constructor
 //-------------------------------------------------
 
@@ -297,9 +323,11 @@ floppy_image_device::floppy_image_device(const machine_config &mconfig, device_t
 	m_amplifier_freakout_time(attotime::from_usec(16)),
 	m_image_dirty(false),
 	m_track_dirty(false),
+	m_write_protect(false),
 	m_ready_counter(0),
 	m_make_sound(false),
-	m_sound_out(*this, FLOPSND_TAG)
+	m_sound_out(*this, FLOPSND_TAG),
+	m_unsaved_writes(*this, "UNSAVED")
 {
 	m_extension_list[0] = '\0';
 }
@@ -495,9 +523,46 @@ uint32_t floppy_image_device::get_sectoring_type()
 
 void floppy_image_device::setup_write(const floppy_image_format_t *_output_format)
 {
-	m_output_format = _output_format;
+	// A read-only image is never saved.  call_load() leaves it with no output
+	// format, and the file manager must not give it one back: commit_image()
+	// would rewrite the file straight away.
+	m_output_format = is_readonly() ? nullptr : _output_format;
 	if(m_image)
 		commit_image();
+	update_wpt();
+}
+
+void floppy_image_device::set_write_protect(bool wp)
+{
+	m_write_protect = wp;
+
+	// A changed flag is a change to the image, so it is saved like a write
+	// from the emulated machine.
+	if (m_image && (m_image->is_write_protected() != wp))
+	{
+		m_image->set_write_protected(wp);
+		m_image_dirty = true;
+	}
+
+	update_wpt();
+}
+
+bool floppy_image_device::default_write_protect(std::string_view filename, const floppy_image_format_t &format)
+{
+	if (!format.supports_save())
+		return m_unsaved_writes->read() != 0;
+
+	util::core_file::ptr fd;
+	std::string revised_path;
+	if (util::zippath_fopen(filename, OPEN_FLAG_READ, fd, revised_path))
+		return false;
+
+	auto io = util::random_read_fill(std::move(fd), 0xff);
+	if (!io)
+		return false;
+
+	floppy_image image(m_tracks, m_sides, m_form_factor);
+	return format.load(*io, m_form_factor, m_variants, image) && image.is_write_protected();
 }
 
 void floppy_image_device::commit_image()
@@ -580,6 +645,7 @@ void floppy_image_device::device_start()
 	save_item(NAME(m_ds));
 	save_item(NAME(m_idx));
 	save_item(NAME(m_wpt));
+	save_item(NAME(m_write_protect));
 	save_item(NAME(m_rdy));
 	save_item(NAME(m_dskchg));
 	save_item(NAME(m_ready));
@@ -615,6 +681,60 @@ void floppy_image_device::device_reset()
 	if(m_motor_always_on && m_image)
 		mon_w(0);
 	cache_clear();
+
+	// An image loaded from the command line is loaded before the cfg file
+	// is read, so the "Image without save support" setting it saw was the
+	// default.  The first reset comes after the cfg file.
+	update_wpt();
+}
+
+// Returns true when the software may write to the loaded image.
+//
+// The image is read-only when the file could not be opened for writing or
+// when a software list marks it write_protected.  m_write_protect, set from
+// the image file's own flag or the file manager's "Write protect" option,
+// has the same effect.  Otherwise the software may write when the changes
+// can reach a file (the format has save()) or when nothing will be saved
+// by the user's choice (the file manager's "Write to memory only" choice
+// leaves m_output_format null).  That leaves a format without save() with
+// no choice made, where the "Image without save support" setting decides.
+bool floppy_image_device::image_writable() const
+{
+	if (is_readonly() || m_write_protect)
+		return false;
+
+	if (!m_output_format || m_output_format->supports_save())
+		return true;
+
+	// An image named on the command line loads while the machine is still
+	// starting, before the input ports can be read.  Treat the setting as
+	// its default then; device_reset() calls update_wpt() once the ports
+	// and the cfg file are in.
+	if (!machine().ioport().safe_to_read())
+		return true;
+
+	return !m_unsaved_writes->read();
+}
+
+// Sets the write protect line from the loaded image and the drive's
+// settings, and tells the controller when it changes.
+void floppy_image_device::update_wpt()
+{
+	if (!m_image)
+		return;
+
+	int const wpt = image_writable() ? 0 : 1;
+	if (wpt != m_wpt)
+	{
+		m_wpt = wpt;
+		if (!m_cur_wpt_cb.isnull())
+			m_cur_wpt_cb(this, m_wpt);
+	}
+}
+
+INPUT_CHANGED_MEMBER(floppy_image_device::unsaved_writes_changed)
+{
+	update_wpt();
 }
 
 std::pair<std::error_condition, const floppy_image_format_t *> floppy_image_device::identify(std::string_view filename)
@@ -705,11 +825,15 @@ std::pair<std::error_condition, std::string> floppy_image_device::call_load()
 	if (wp && !std::strcmp(wp, "true"))
 		make_readonly();
 
+	// The image's own flag write protects the disk but leaves the file
+	// writable, so that the file manager can clear the flag and save it.
+	m_write_protect = m_image->is_write_protected();
+
 	m_output_format = is_readonly() ? nullptr : best_format;
 
 	m_image_dirty = false;
 
-	init_floppy_load(m_output_format != nullptr);
+	init_floppy_load(image_writable());
 
 	if (!m_cur_load_cb.isnull())
 		m_cur_load_cb(this);
@@ -735,6 +859,8 @@ void floppy_image_device::call_unload()
 	m_wpt = 0; // sensor is uncovered
 	if (!m_cur_wpt_cb.isnull())
 		m_cur_wpt_cb(this, m_wpt);
+
+	m_write_protect = false;
 
 	if (!m_cur_unload_cb.isnull())
 		m_cur_unload_cb(this);

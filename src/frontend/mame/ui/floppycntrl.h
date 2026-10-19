@@ -32,6 +32,8 @@ private:
 	const floppy_image_format_t *m_input_format, *m_output_format;
 	const floppy_image_device::fs_info *m_create_fs;
 	std::string m_input_filename, m_output_filename;
+	bool m_write_protect;       // the "Write protect" option the user chose
+	bool m_apply_write_protect; // m_write_protect applies to this load
 
 	virtual bool hook_load(const std::string &filename) override;
 	virtual bool hook_create(std::string_view path) override;

@@ -631,6 +631,14 @@ bool menu_file_selector::handle(event const *ev)
     SELECT RW
 ***************************************************************************/
 
+namespace {
+
+// the item reference of the "Write protect" option; the access modes use
+// values from 0x3000 up
+void *const ITEMREF_WRITE_PROTECT = reinterpret_cast<void *>(uintptr_t(1));
+
+} // anonymous namespace
+
 //-------------------------------------------------
 //  ctor
 //-------------------------------------------------
@@ -639,10 +647,12 @@ menu_select_rw::menu_select_rw(
 		mame_ui_manager &mui,
 		render_target &target,
 		bool can_in_place,
+		bool write_protect,
 		handler_function &&handler)
 	: menu(mui, target)
 	, m_handler(std::move(handler))
 	, m_can_in_place(can_in_place)
+	, m_write_protect(write_protect)
 {
 }
 
@@ -664,10 +674,14 @@ void menu_select_rw::populate()
 {
 	set_heading(_("Select access mode"));
 
-	item_append(_("Read-only"), 0, itemref_from_result(result::READONLY));
+	// the write protect line the drive gives the emulated machine
+	item_append_on_off(_("Write protect"), m_write_protect, 0, ITEMREF_WRITE_PROTECT);
+	item_append(menu_item_type::SEPARATOR);
+
 	if (m_can_in_place)
-		item_append(_("Read-write"), 0, itemref_from_result(result::READWRITE));
-	item_append(_("Read this image, write to another image"), 0, itemref_from_result(result::WRITE_OTHER));
+		item_append(_("Write to source image"), 0, itemref_from_result(result::READWRITE));
+	item_append(_("Write to duplicate image"), 0, itemref_from_result(result::WRITE_OTHER));
+	item_append(_("Write to memory only"), 0, itemref_from_result(result::WRITE_MEMORY));
 	//item_append(_("Read this image, write to diff"), 0, itemref_from_result(result::WRITE_DIFF));
 	item_append(menu_item_type::SEPARATOR);
 }
@@ -679,8 +693,24 @@ void menu_select_rw::populate()
 
 bool menu_select_rw::handle(event const *ev)
 {
-	if (ev && ev->iptkey == IPT_UI_SELECT)
-		m_handler(result_from_itemref(ev->itemref));
+	if (!ev || !ev->item)
+		return false;
+
+	if (ev->itemref == ITEMREF_WRITE_PROTECT)
+	{
+		// the "Write protect" option
+		if (ev->iptkey == IPT_UI_LEFT || ev->iptkey == IPT_UI_RIGHT || ev->iptkey == IPT_UI_SELECT)
+		{
+			m_write_protect = !m_write_protect;
+			ev->item->set_subtext(m_write_protect ? _("On") : _("Off"));
+			ev->item->set_flags(m_write_protect ? FLAG_LEFT_ARROW : FLAG_RIGHT_ARROW);
+			return true;
+		}
+	}
+	else if (ev->iptkey == IPT_UI_SELECT)
+	{
+		m_handler(result_from_itemref(ev->itemref), m_write_protect);
+	}
 
 	return false;
 }

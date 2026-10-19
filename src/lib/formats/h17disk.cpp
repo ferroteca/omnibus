@@ -76,8 +76,12 @@ std::pair<std::uint64_t, std::size_t> find_block(util::random_read &io, uint32_t
 	return std::make_pair(pos + 8, header.length);
 }
 
-format find_format(util::random_read &io)
+// Returns the layout from the DskF block.  The block's optional third byte
+// is the R/O flag: 1 means the disk is write protected.
+format find_format(util::random_read &io, bool &write_protected)
 {
+	write_protected = false;
+
 	auto const [pos, length] = find_block(io, DskF);
 	if ((pos == 0) || (length < 2) || (length > 3))
 	{
@@ -98,6 +102,8 @@ format find_format(util::random_read &io)
 
 	int head_count  = buf[0];
 	int track_count = buf[1];
+
+	write_protected = (length == 3) && (buf[2] == 1);
 
 	for (int i = 0; formats[i].head_count; i++)
 	{
@@ -141,7 +147,8 @@ int heath_h17d_format::identify(util::random_read &io, uint32_t form_factor, con
 
 bool heath_h17d_format::load(util::random_read &io, uint32_t form_factor, const std::vector<uint32_t> &variants, floppy_image &image) const
 {
-	const format fmt = find_format(io);
+	bool write_protected;
+	const format fmt = find_format(io, write_protected);
 
 	if (!fmt.head_count)
 	{
@@ -149,6 +156,8 @@ bool heath_h17d_format::load(util::random_read &io, uint32_t form_factor, const 
 
 		return false;
 	}
+
+	image.set_write_protected(write_protected);
 
 	auto const [secm_pos, secm_length] = find_block(io, SecM);
 

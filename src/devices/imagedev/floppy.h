@@ -301,6 +301,22 @@ public:
 	virtual const char *image_brief_type_name() const noexcept override { return "flop"; }
 	void setup_write(const floppy_image_format_t *output_format);
 
+	// Write protect for the loaded image: the write protect line the drive
+	// gives the emulated machine.  call_load() sets it from the image's own
+	// flag, and the file manager's "Write protect" option sets it before
+	// the image is saved.  It also sets the image's flag, which a format
+	// with such a flag writes to the file when the image is saved.  Cleared
+	// at unload.
+	void set_write_protect(bool wp);
+
+	// Returns the state the file manager's "Write protect" option starts
+	// in for an image file: the image's own flag, or for a format without
+	// save(), the "Image without save support" setting.
+	bool default_write_protect(std::string_view filename, const floppy_image_format_t &format);
+
+	// The "Image without save support" setting changed in the UI.
+	DECLARE_INPUT_CHANGED_MEMBER(unsaved_writes_changed);
+
 	void setup_load_cb(load_cb cb);
 	void setup_unload_cb(unload_cb cb);
 	void setup_index_pulse_cb(index_pulse_cb cb);
@@ -358,6 +374,7 @@ protected:
 	virtual void device_reset() override ATTR_COLD;
 	virtual void device_config_complete() override;
 	virtual void device_add_mconfig(machine_config &config) override ATTR_COLD;
+	virtual ioport_constructor device_input_ports() const override ATTR_COLD;
 
 	// device_image_interface implementation
 	virtual const software_list_loader &get_software_list_loader() const override;
@@ -368,6 +385,8 @@ protected:
 	virtual void setup_characteristics() = 0;
 
 	void init_floppy_load(bool write_supported);
+	bool image_writable() const;
+	void update_wpt();
 
 	std::function<void (format_registration &fr)> m_format_registration_cb;
 	const floppy_image_format_t *m_input_format;
@@ -424,6 +443,7 @@ protected:
 	bool m_cache_weak;
 
 	bool m_image_dirty, m_track_dirty;
+	bool m_write_protect;
 	int m_ready_counter;
 
 	load_cb m_cur_load_cb;
@@ -465,6 +485,7 @@ protected:
 	bool m_make_sound;
 	const floppy_sound_samples *m_samples;
 	required_device<floppy_sound_device> m_sound_out;
+	required_ioport m_unsaved_writes;
 };
 
 #define DECLARE_FLOPPY_IMAGE_DEVICE(Type, Name, Interface) \
