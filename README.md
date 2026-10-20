@@ -11,6 +11,7 @@ MAME is a multi-purpose emulation framework. Its purpose is to preserve decades 
 ## Where can I find out more?
 
 * [Omnibus on GitHub](https://github.com/ferroteca/omnibus)
+* [Changes from MAME](CHANGES.md)
 * [Official MAME Development Team Site](https://www.mamedev.org/) (binary downloads, wiki, forums, and more)
 * [MAME documentation](https://docs.mamedev.org/)
 
