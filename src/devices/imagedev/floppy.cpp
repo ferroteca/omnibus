@@ -549,7 +549,7 @@ void floppy_image_device::set_write_protect(bool wp)
 
 bool floppy_image_device::default_write_protect(std::string_view filename, const floppy_image_format_t &format)
 {
-	if (!format.supports_save())
+	if (!format.save_format())
 		return m_unsaved_writes->read() != 0;
 
 	util::core_file::ptr fd;
@@ -829,7 +829,11 @@ std::pair<std::error_condition, std::string> floppy_image_device::call_load()
 	// writable, so that the file manager can clear the flag and save it.
 	m_write_protect = m_image->is_write_protected();
 
-	m_output_format = is_readonly() ? nullptr : best_format;
+	// A format may save in a newer version of its file format.  A format
+	// without save() stays the output format, so that image_writable()
+	// applies the "Image without save support" setting to it.
+	const floppy_image_format_t *const save_format = best_format->save_format();
+	m_output_format = is_readonly() ? nullptr : save_format ? save_format : best_format;
 
 	m_image_dirty = false;
 

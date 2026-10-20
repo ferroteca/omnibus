@@ -199,6 +199,11 @@ bool floppy_image_format_t::supports_save() const noexcept
 	return false;
 }
 
+const floppy_image_format_t *floppy_image_format_t::save_format() const noexcept
+{
+	return supports_save() ? this : nullptr;
+}
+
 bool floppy_image_format_t::extension_matches(std::string_view file_name) const noexcept
 {
 	auto const sep = file_name.rfind('.');

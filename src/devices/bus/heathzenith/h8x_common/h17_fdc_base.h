@@ -21,6 +21,7 @@
 #pragma once
 
 #include "imagedev/floppy.h"
+#include "machine/fdc_pll.h"
 #include "machine/s2350.h"
 #include "machine/timer.h"
 
@@ -58,6 +59,11 @@ protected:
 	void reset_rx_separator();
 	void schedule_rx_cell();
 	void rx_emit_cell();
+	void set_write_gate(bool write_gate);
+	void start_tx_write();
+	void stop_tx_write();
+	void write_tx_cell(bool bit);
+	void tx_w(int state);
 
 	void sync_character_received(int state);
 
@@ -68,6 +74,7 @@ protected:
 	required_device_array<floppy_connector, MAX_FLOPPY_DRIVES> m_floppies;
 	required_device<timer_device> m_tx_timer;
 	emu_timer *m_rx_timer;
+	fdc_pll_t m_tx_pll;
 
 	attotime m_rx_cell_start;
 	attotime m_rx_scan;
@@ -76,6 +83,7 @@ protected:
 
 	bool m_motor_on;
 	bool m_write_gate;
+	bool m_tx_write_active;
 	bool m_sync_char_received;
 	u8   m_step_direction;
 	u8   m_side;

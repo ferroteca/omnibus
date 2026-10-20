@@ -17,6 +17,7 @@
 
 #include <memory>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 #include <cassert>
@@ -90,6 +91,12 @@ public:
 	virtual const char *extensions() const noexcept = 0;
 	//! @returns true if format supports saving.
 	virtual bool supports_save() const noexcept;
+	//! @returns the format that writes back an image this format
+	//! loaded, or nullptr if none can.  By default this is the format
+	//! itself when it supports saving.  A format that loads an old
+	//! version of a file can return the format for the current
+	//! version, so that a save writes the current version.
+	virtual const floppy_image_format_t *save_format() const noexcept;
 
 	//! This checks if the file has the proper extension for this format.
 	//! @param file_name
@@ -605,6 +612,15 @@ public:
 	//! @param wp true for write protected.
 	void set_write_protected(bool wp) noexcept { write_protected = wp; }
 
+	//! @return the data the format's load() kept for its save().
+	const std::vector<uint8_t> &get_format_data() const noexcept { return format_data; }
+	//! A format's load() calls this to keep parts of the image file that
+	//! the tracks cannot hold, such as metadata blocks.  The format's save()
+	//! reads them back and writes them to the new file.  The layout of the
+	//! data belongs to the format.
+	//! @param data the data to keep.
+	void set_format_data(std::vector<uint8_t> &&data) noexcept { format_data = std::move(data); }
+
 	//! Find most recent and next index hole for provided angular position.
 	//! The most recent hole may be equal to provided position. The next
 	//! hole will be 200000000 if all holes of the current rotation are in
@@ -663,6 +679,7 @@ private:
 
 	uint32_t form_factor, variant, sectoring;
 	bool write_protected = false;
+	std::vector<uint8_t> format_data;
 
 	struct track_info
 	{

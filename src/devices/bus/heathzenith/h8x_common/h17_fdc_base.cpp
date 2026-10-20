@@ -8,9 +8,6 @@
     The bus attachments are h89/h17_fdc.cpp (H-88-1) and h8/h_8_17.cpp
     (H-8-17).
 
-  TODO
-    - writing to disk images
-
 ****************************************************************************/
 
 #include "emu.h"
@@ -83,6 +80,8 @@ void heath_h17_fdc_base_device::set_floppy(floppy_image_device *floppy)
 
 	LOGDRIVE("%s: selecting new drive\n", FUNCNAME);
 
+	stop_tx_write();
+
 	m_floppy = floppy;
 
 	// set any latched signals
@@ -92,6 +91,7 @@ void heath_h17_fdc_base_device::set_floppy(floppy_image_device *floppy)
 	}
 
 	reset_rx_separator();
+	start_tx_write();
 }
 
 void heath_h17_fdc_base_device::side_select_w(int state)
@@ -100,8 +100,10 @@ void heath_h17_fdc_base_device::side_select_w(int state)
 
 	if (m_floppy)
 	{
+		stop_tx_write();
 		m_floppy->ss_w(m_side);
 		reset_rx_separator();
+		start_tx_write();
 	}
 }
 
@@ -121,8 +123,10 @@ void heath_h17_fdc_base_device::step_w(int state)
 	{
 		LOGFUNC("%s: step: 0x%02x\n", FUNCNAME, state);
 
+		stop_tx_write();
 		m_floppy->stp_w(state);
 		reset_rx_separator();
+		start_tx_write();
 	}
 }
 
@@ -131,6 +135,11 @@ void heath_h17_fdc_base_device::set_motor(bool motor_on)
 	if (m_motor_on == motor_on)
 	{
 		return;
+	}
+
+	if (!motor_on)
+	{
+		stop_tx_write();
 	}
 
 	m_motor_on = motor_on;
@@ -147,16 +156,18 @@ void heath_h17_fdc_base_device::set_motor(bool motor_on)
 	}
 
 	reset_rx_separator();
+	start_tx_write();
 }
 
 // Receive data separator.  The board has no PLL, so the cell rate is fixed and
 // each flux transition only moves the phase.  The first pulse in a cell is its
 // clock; after that a pulse near the middle is a data 1, a later one is the
-// next cell's clock, and an earlier one is dropped.
+// next cell's clock, and an earlier one is dropped.  The separator is idle
+// while the board writes, so it does not decode the flux being written.
 
 void heath_h17_fdc_base_device::schedule_rx_cell()
 {
-	if (!m_motor_on || !m_floppy)
+	if (!m_motor_on || !m_floppy || m_tx_write_active)
 	{
 		m_rx_timer->adjust(attotime::never);
 		return;
@@ -193,7 +204,7 @@ void heath_h17_fdc_base_device::rx_emit_cell()
 
 TIMER_CALLBACK_MEMBER(heath_h17_fdc_base_device::rx_timer_cb)
 {
-	if (!m_motor_on || !m_floppy)
+	if (!m_motor_on || !m_floppy || m_tx_write_active)
 	{
 		m_rx_timer->adjust(attotime::never);
 		return;
@@ -253,7 +264,7 @@ TIMER_CALLBACK_MEMBER(heath_h17_fdc_base_device::rx_timer_cb)
 
 void heath_h17_fdc_base_device::ctrl_w(u8 val)
 {
-	m_write_gate = bool(BIT(val, CTRL_WRITE_GATE));
+	set_write_gate(bool(BIT(val, CTRL_WRITE_GATE)));
 
 	set_motor(bool(BIT(val, CTRL_MOTOR_ON)));
 
@@ -349,6 +360,7 @@ void heath_h17_fdc_base_device::device_start()
 
 	save_item(NAME(m_motor_on));
 	save_item(NAME(m_write_gate));
+	save_item(NAME(m_tx_write_active));
 	save_item(NAME(m_sync_char_received));
 	save_item(NAME(m_rx_cell_start));
 	save_item(NAME(m_rx_scan));
@@ -362,10 +374,13 @@ void heath_h17_fdc_base_device::device_reset()
 {
 	m_motor_on           = false;
 	m_write_gate         = false;
+	m_tx_write_active    = false;
 	m_sync_char_received = false;
 
 	m_tx_timer->adjust(attotime::from_hz(USRT_TX_CLOCK), 0, attotime::from_hz(USRT_TX_CLOCK));
 	reset_rx_separator();
+	m_tx_pll.set_clock(fm_cell_time());
+	m_tx_pll.reset(machine().time());
 }
 
 static void h17_floppies(device_slot_interface &device)
@@ -384,20 +399,102 @@ TIMER_DEVICE_CALLBACK_MEMBER(heath_h17_fdc_base_device::tx_timer_cb)
 	m_s2350->tcp_w();
 }
 
+void heath_h17_fdc_base_device::set_write_gate(bool write_gate)
+{
+	if (m_write_gate == write_gate)
+	{
+		return;
+	}
+
+	if (!write_gate)
+	{
+		stop_tx_write();
+	}
+
+	m_write_gate = write_gate;
+
+	if (write_gate)
+	{
+		start_tx_write();
+	}
+	else
+	{
+		// The read separator was idle during the write.  Re-anchor it at the
+		// current head position, as after a seek or a drive change.  HDOS
+		// reads back a sector it has just written to verify it, and without
+		// this the read starts from a stale position and loses sync.
+		reset_rx_separator();
+	}
+}
+
+void heath_h17_fdc_base_device::start_tx_write()
+{
+	if (m_tx_write_active || !m_write_gate || !m_motor_on || !m_floppy)
+	{
+		return;
+	}
+
+	m_tx_pll.set_clock(fm_cell_time());
+	m_tx_pll.reset(machine().time());
+	m_tx_pll.start_writing(machine().time());
+	m_tx_write_active = true;
+}
+
+void heath_h17_fdc_base_device::stop_tx_write()
+{
+	if (!m_tx_write_active)
+	{
+		return;
+	}
+
+	m_tx_pll.stop_writing(m_floppy, m_tx_pll.ctime);
+	m_tx_write_active = false;
+}
+
+void heath_h17_fdc_base_device::write_tx_cell(bool bit)
+{
+	attotime tm;
+	m_tx_pll.write_next_bit(bit, tm, m_floppy, m_tx_pll.ctime + fm_cell_time());
+
+	// The PLL buffers at most 32 transitions, so flush them to the floppy
+	// before the buffer fills.
+	if (m_tx_pll.write_position >= 30)
+	{
+		m_tx_pll.commit(m_floppy, m_tx_pll.ctime);
+	}
+}
+
+// The S2350 shifts out one bit per transmit clock.  Each bit is one FM bit
+// cell: a clock half-cell, which always has a transition, then a data
+// half-cell, which has one for a 1.
+void heath_h17_fdc_base_device::tx_w(int state)
+{
+	if (!m_tx_write_active)
+	{
+		return;
+	}
+
+	write_tx_cell(true);
+	write_tx_cell(BIT(state, 0));
+}
+
 void heath_h17_fdc_base_device::floppy_formats(format_registration &fr)
 {
-	fr.add(FLOPPY_H17D_FORMAT);
+	fr.add(FLOPPY_H17D_V1_FORMAT);
+	fr.add(FLOPPY_H17D_V2_FORMAT);
 	fr.add(FLOPPY_H8D_FORMAT);
 }
 
 void heath_h17_fdc_base_device::device_add_mconfig(machine_config &config)
 {
 	S2350(config, m_s2350);
+	m_s2350->tx_handler().set(FUNC(heath_h17_fdc_base_device::tx_w));
 	m_s2350->sync_character_received_cb().set(FUNC(heath_h17_fdc_base_device::sync_character_received));
 
 	for (int i = 0; i < MAX_FLOPPY_DRIVES; i++)
 	{
 		FLOPPY_CONNECTOR(config, m_floppies[i], h17_floppies, "ssdd", heath_h17_fdc_base_device::floppy_formats);
+		m_floppies[i]->set_sectoring_type(floppy_image::H10);
 		m_floppies[i]->enable_sound(true);
 	}
 

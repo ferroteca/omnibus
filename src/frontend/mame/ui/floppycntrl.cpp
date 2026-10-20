@@ -200,7 +200,7 @@ bool menu_control_floppy_image::hook_load(const std::string &filename)
 		return false;
 	}
 
-	bool can_in_place = m_input_format->supports_save();
+	bool can_in_place = m_input_format->save_format() != nullptr;
 	if (can_in_place)
 	{
 		std::string tmp_path;
@@ -243,7 +243,8 @@ bool menu_control_floppy_image::hook_load(const std::string &filename)
 
 				case menu_select_rw::result::READWRITE:
 					stack_pop(); // pop the access mode menu
-					m_output_format = m_input_format;
+					// the input format may save in a newer version of its file format
+					m_output_format = m_input_format->save_format();
 					if (do_load_create())
 					{
 						stack_pop(); // pop the file selection menu
