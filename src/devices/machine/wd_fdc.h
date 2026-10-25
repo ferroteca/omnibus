@@ -374,6 +374,7 @@ private:
 	void drop_hld();
 
 	void update_sso();
+	void set_sso(int side);
 };
 
 class wd_fdc_analog_device_base : public wd_fdc_device_base {
