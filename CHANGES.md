@@ -13,6 +13,7 @@ Omnibus is based on MAME 0.289. This file lists the changes Omnibus makes to MAM
 * H8/H89: the H-8-17 and H-88-1 controllers write to disk images.
 * H8/H89: add the `h17_flop` software list of hard-sectored disks: CP/M 2.2.02, 2.2.03 and 2.2.04, and HDOS 1.0 (issues 50.00.00 and 50.03.00), 1.5, 1.6 and 2.0. The H-88-1 owns the list, and the H-8-17 lists it as compatible.
 * H89: add the `h37_flop` software list of soft-sectored disks: the H-37 builds of CP/M 2.2.03 and 2.2.04. The Z-37 controller owns the list.
+* H9: add the H9 video terminal, as the rs232 option `h9` and as the `h9` system. It has no CPU, so the device models what the TTL boards do. Its layout shows the hood, the tube and all 67 keys, and every key can be clicked. The keyboard is bit-paired, as Heath built it.
 * H89: name the boot controller for the software menus. Under the MTR-90 SW501 labels, SW501:5 picks Disk I/O #1 (the Z-89-37) or Disk I/O #2 (the H-88-1). With both cards fitted, the launch menu offers only the list of the controller that boots.
 * Formats: add the H8D disk image format. The H-8-17 and H-88-1 controllers can load H8D images.
 * Formats: h17disk and H8D images can be saved. h17disk saves version 2 images, and identifies only version 2 files. A save keeps the file's other blocks, such as Labl, Comm and Date, and each sector's status byte.

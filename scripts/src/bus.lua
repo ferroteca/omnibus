@@ -2381,6 +2381,26 @@ end
 
 ---------------------------------------------------
 --
+--@src/devices/bus/heathzenith/h9/h9.h,BUSES["HEATHZENITH_H9"] = true
+---------------------------------------------------
+
+if BUSES["HEATHZENITH_H9"] then
+	files {
+		MAME_DIR .. "src/devices/bus/heathzenith/h9/h9.cpp",
+		MAME_DIR .. "src/devices/bus/heathzenith/h9/h9.h",
+	}
+
+	dependency {
+		{ MAME_DIR .. "src/devices/bus/heathzenith/h9/h9.cpp", GEN_DIR .. "emu/layout/heath_h9.lh" },
+	}
+
+	custombuildtask {
+		layoutbuildtask("emu/layout", "heath_h9"),
+	}
+end
+
+---------------------------------------------------
+--
 --
 ---------------------------------------------------
 
@@ -4934,6 +4954,8 @@ if BUSES["RS232"] then
 		MAME_DIR .. "src/devices/bus/rs232/exorterm.h",
 		MAME_DIR .. "src/devices/bus/rs232/heath_h19.cpp",
 		MAME_DIR .. "src/devices/bus/rs232/heath_h19.h",
+		MAME_DIR .. "src/devices/bus/rs232/heath_h9.cpp",
+		MAME_DIR .. "src/devices/bus/rs232/heath_h9.h",
 		MAME_DIR .. "src/devices/bus/rs232/hlemouse.cpp",
 		MAME_DIR .. "src/devices/bus/rs232/hlemouse.h",
 		MAME_DIR .. "src/devices/bus/rs232/ie15.cpp",
