@@ -85,23 +85,15 @@ u8 heath_intr_cntrl::get_instruction()
 		return 0x00;
 	}
 
-	// ideally this would be handled with a function like ffs()
-	u8 level = 0;
-	u8 mask  = 0x01;
+	// The highest pending level wins. Both machines send the levels to a
+	// 74LS148, which encodes its highest numbered active input: IC217 on the
+	// H8 CPU board (595-2014), and U557 on the H88/H89 CPU logic board. So the
+	// 2 mSec clock at level 1 has the lowest priority.
+	u8 level = 7;
 
-	while (mask)
+	while (!BIT(m_intr_lines, level))
 	{
-		if (m_intr_lines & mask)
-		{
-			break;
-		}
-		level++;
-		mask <<= 1;
-	}
-
-	if (level > 7)
-	{
-		logerror("bad level: %d\n", level);
+		level--;
 	}
 
 	// return RST based on level
