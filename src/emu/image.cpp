@@ -17,6 +17,7 @@
 #include "fileio.h"
 #include "main.h"
 #include "softlist.h"
+#include "softlist_dev.h"
 
 // lib/util
 #include "corestr.h"
@@ -49,6 +50,33 @@ image_manager::image_manager(running_machine &machine)
 
 		// find the image option in image_options()
 		const std::string &startup_image(machine.options().image_option(image.instance_name()).value());
+
+		// An image option is kept by instance name when a slot changes, so a
+		// software item can outlive the card whose list it came from.  Clear
+		// the option and start with the drive empty instead of stopping.
+		std::string list_name;
+		if (!startup_image.empty() && software_name_parse(startup_image, &list_name) && !list_name.empty())
+		{
+			bool list_present = false;
+			for (software_list_device &swlist : software_list_device_enumerator(machine.root_device()))
+			{
+				if (swlist.list_name() == list_name)
+				{
+					list_present = true;
+					break;
+				}
+			}
+
+			if (!list_present)
+			{
+				osd_printf_warning("%s: software list %s is not present, so %s was not loaded\n",
+						image.device().tag(), list_name, startup_image);
+				machine.options().image_option(image.instance_name()).specify("");
+				if (machine.options().write_config())
+					write_config(machine.options(), nullptr, &machine.system());
+				continue;
+			}
+		}
 
 		// is an image specified for this image?
 		if (!startup_image.empty())

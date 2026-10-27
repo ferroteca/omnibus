@@ -12,6 +12,7 @@ Omnibus is based on MAME 0.289. This file lists the changes Omnibus makes to MAM
 * H8/H89: the H-8-17 and H-88-1 controllers write to disk images.
 * H8/H89: add the `h17_flop` software list of hard-sectored disks: CP/M 2.2.02, 2.2.03 and 2.2.04, and HDOS 1.0 (issues 50.00.00 and 50.03.00), 1.5, 1.6 and 2.0. The H-88-1 owns the list, and the H-8-17 lists it as compatible.
 * H89: add the `h37_flop` software list of soft-sectored disks: the H-37 builds of CP/M 2.2.03 and 2.2.04. The Z-37 controller owns the list.
+* H89: name the boot controller for the software menus. Under the MTR-90 SW501 labels, SW501:5 picks Disk I/O #1 (the Z-89-37) or Disk I/O #2 (the H-88-1). With both cards fitted, the launch menu offers only the list of the controller that boots.
 * Formats: add the H8D disk image format. The H-8-17 and H-88-1 controllers can load H8D images.
 * Formats: h17disk and H8D images can be saved. h17disk saves version 2 images, and identifies only version 2 files. A save keeps the file's other blocks, such as Labl, Comm and Date, and each sector's status byte.
 * Formats: read h17disk version 1 images. Version 1 stores a dump of each sector from the disk, so the sector headers come from the image.
@@ -27,6 +28,12 @@ Omnibus is based on MAME 0.289. This file lists the changes Omnibus makes to MAM
 * Separate 'nonpersistent' (full emulated read/write support, but changes are not written back to the disk image file) and 'write protected' (the emulated system sees write protected media) floppy modes.
 * Floppy formats: add `save_format()`, which names the format that saves an image a format loaded. By default it is the format itself when it supports saving. A format for an old file version can return the format for the current version. The h17disk version 1 format uses it, so "Write to source image" saves a version 1 file as version 2, and h17disk1 does not appear in the lists of formats to save as.
 * File manager: the access modes are "Write to source image", "Write to duplicate image" and "Write to memory only". A separate "Write protect" option sets the drive's write protect line. It starts from the image's own write protect flag, or from the "Image without save support" setting for a format without save(), and it sets the image's flag.
+
+### Software lists and images
+
+* A software list inside a card belongs to that card. A software item mounts on a drive of the card that holds its list, and the file manager offers each drive only its own card's lists. It skips the "Software Lists" menu when only one list is usable.
+* A driver can name its boot device with `driver_device::boot_device()`. The launch software menu then offers only the lists under that device. The answer comes from the system's default switch settings and its saved cfg file.
+* An image option that names a software list the machine does not have is cleared with a warning, and the drive starts empty. Before, MAME stopped with a fatal error. This happened when a slot change removed the card that held the list.
 
 ## Merged into MAME after 0.289
 
