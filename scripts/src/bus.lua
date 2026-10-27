@@ -2388,6 +2388,8 @@ if BUSES["HEATHZENITH_H8"] or BUSES["HEATHZENITH_H89"] then
 	files {
 		MAME_DIR .. "src/devices/bus/heathzenith/h8x_common/h17_fdc_base.cpp",
 		MAME_DIR .. "src/devices/bus/heathzenith/h8x_common/h17_fdc_base.h",
+		MAME_DIR .. "src/devices/bus/heathzenith/h8x_common/z37_fdc_base.cpp",
+		MAME_DIR .. "src/devices/bus/heathzenith/h8x_common/z37_fdc_base.h",
 	}
 end
 
@@ -2418,6 +2420,8 @@ if BUSES["HEATHZENITH_H8"] then
 		MAME_DIR .. "src/devices/bus/heathzenith/h8/ha_8_8.h",
 		MAME_DIR .. "src/devices/bus/heathzenith/h8/wh_8_16.cpp",
 		MAME_DIR .. "src/devices/bus/heathzenith/h8/wh_8_16.h",
+		MAME_DIR .. "src/devices/bus/heathzenith/h8/wh_8_37.cpp",
+		MAME_DIR .. "src/devices/bus/heathzenith/h8/wh_8_37.h",
 		MAME_DIR .. "src/devices/bus/heathzenith/h8/wh_8_64.cpp",
 		MAME_DIR .. "src/devices/bus/heathzenith/h8/wh_8_64.h",
 	}
