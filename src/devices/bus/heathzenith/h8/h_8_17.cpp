@@ -40,6 +40,7 @@
 
 #include "bus/heathzenith/h8x_common/h17_fdc_base.h"
 
+#include "softlist_dev.h"
 
 namespace {
 
@@ -52,6 +53,7 @@ protected:
 	virtual const tiny_rom_entry *device_rom_region() const override ATTR_COLD;
 	virtual void device_start() override ATTR_COLD;
 	virtual void device_reset() override ATTR_COLD;
+	virtual void device_add_mconfig(machine_config &config) override ATTR_COLD;
 	virtual ioport_constructor device_input_ports() const override ATTR_COLD;
 
 	virtual void map_mem(address_space_installer & space) override ATTR_COLD;
@@ -134,6 +136,14 @@ void h_8_17_device::device_reset()
 	m_ram_write_enabled = false;
 
 	heath_h17_fdc_base_device::device_reset();
+}
+
+void h_8_17_device::device_add_mconfig(machine_config &config)
+{
+	heath_h17_fdc_base_device::device_add_mconfig(config);
+
+	// the H-8-17 reads the same disks as the H-88-1
+	SOFTWARE_LIST(config, "flop_list").set_compatible("h17_flop");
 }
 
 static INPUT_PORTS_START( h_8_17 )

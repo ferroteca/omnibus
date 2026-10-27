@@ -18,6 +18,7 @@
 
 #include "bus/heathzenith/h8x_common/h17_fdc_base.h"
 
+#include "softlist_dev.h"
 
 namespace {
 
@@ -29,6 +30,7 @@ public:
 protected:
 	virtual void device_start() override ATTR_COLD;
 	virtual void device_reset() override ATTR_COLD;
+	virtual void device_add_mconfig(machine_config &config) override ATTR_COLD;
 
 	virtual void set_ram_write_enable(int state) override;
 
@@ -75,6 +77,15 @@ void h_88_1_device::device_reset()
 	}
 
 	heath_h17_fdc_base_device::device_reset();
+}
+
+void h_88_1_device::device_add_mconfig(machine_config &config)
+{
+	heath_h17_fdc_base_device::device_add_mconfig(config);
+
+	// The list belongs to the controller, not to a machine. The H-88-1 was
+	// standard on the H89 and an option for the H88.
+	SOFTWARE_LIST(config, "flop_list").set_original("h17_flop");
 }
 
 } // anonymous namespace

@@ -7,6 +7,8 @@ Omnibus is based on MAME 0.289. This file lists the changes Omnibus makes to MAM
 * H8: add the H-8-17 hard-sectored floppy controller. A setting models the HA-8-8 ROM disable modification. The H-8-17 and the H89 H-88-1 controller now share code in `h17_fdc_base`.
 * H8: gate the H-8-5 console interrupt with /DTR.
 * H8/H89: the H-8-17 and H-88-1 controllers write to disk images.
+* H8/H89: add the `h17_flop` software list of hard-sectored disks: CP/M 2.2.02, 2.2.03 and 2.2.04, and HDOS 1.0 (issues 50.00.00 and 50.03.00), 1.5, 1.6 and 2.0. The H-88-1 owns the list, and the H-8-17 lists it as compatible.
+* H89: add the `h37_flop` software list of soft-sectored disks: the H-37 builds of CP/M 2.2.03 and 2.2.04. The Z-37 controller owns the list.
 * Formats: add the H8D disk image format. The H-8-17 and H-88-1 controllers can load H8D images.
 * Formats: h17disk and H8D images can be saved. h17disk saves version 2 images, and identifies only version 2 files. A save keeps the file's other blocks, such as Labl, Comm and Date, and each sector's status byte.
 * Formats: read h17disk version 1 images. Version 1 stores a dump of each sector from the disk, so the sector headers come from the image.

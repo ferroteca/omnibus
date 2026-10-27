@@ -15,6 +15,8 @@
 
 #include "z37_fdc.h"
 
+#include "softlist_dev.h"
+
 #define LOG_REG (1U << 1)    // Shows register setup
 #define LOG_LINES (1U << 2)  // Show control lines
 #define LOG_DRIVE (1U << 3)  // Show drive select
@@ -249,6 +251,10 @@ void h89bus_z37_device::device_add_mconfig(machine_config &config)
 	m_floppies[2]->enable_sound(true);
 	FLOPPY_CONNECTOR(config, m_floppies[3], z37_floppies, nullptr, floppy_image_device::default_mfm_floppy_formats);
 	m_floppies[3]->enable_sound(true);
+
+	// The list belongs to the controller, not to a machine. The Z-37 was
+	// standard on the Z-90 and an option for the H89.
+	SOFTWARE_LIST(config, "flop_list").set_original("h37_flop");
 }
 
 void h89bus_z37_device::set_irq(int state)
