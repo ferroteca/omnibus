@@ -173,6 +173,16 @@ h89bus::addr_ranges device_heath_io_decoder_interface::scan_io_decoder_rom(u8 se
 	bool found = false;
 	u8 first = 0, last = 0;
 
+	// With no select lines, the test below matches every address, and the
+	// card would install itself over the whole I/O space, on top of every
+	// other card. This happens when update_slot_select_bits() strips every
+	// line a card asks for, because its slot does not carry them. Such a card
+	// reaches no ports, so return no ranges.
+	if (select_bits == 0)
+	{
+		return ranges;
+	}
+
 	for (int i = 0; i < 256; i++)
 	{
 		u8 val = rom[i] ^ 0xff;

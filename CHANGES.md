@@ -7,6 +7,7 @@ Omnibus is based on MAME 0.289. This file lists the changes Omnibus makes to MAM
 * H8: add the H-8-17 hard-sectored floppy controller. A setting models the HA-8-8 ROM disable modification. The H-8-17 and the H89 H-88-1 controller now share code in `h17_fdc_base`.
 * H8: gate the H-8-5 console interrupt with /DTR.
 * H8/H89: the interrupt controller gives the highest pending level priority, as the 74LS148 on both CPU boards does. Before, the lowest level won, so the 2 mSec clock at level 1 came ahead of every card on the bus.
+* H89 bus: a card that asks the I/O decoder for select lines its slot does not carry gets no ports. Before, it got the whole I/O space.
 * H8/H89: the H-8-17 and H-88-1 controllers write to disk images.
 * H8/H89: add the `h17_flop` software list of hard-sectored disks: CP/M 2.2.02, 2.2.03 and 2.2.04, and HDOS 1.0 (issues 50.00.00 and 50.03.00), 1.5, 1.6 and 2.0. The H-88-1 owns the list, and the H-8-17 lists it as compatible.
 * H89: add the `h37_flop` software list of soft-sectored disks: the H-37 builds of CP/M 2.2.03 and 2.2.04. The Z-37 controller owns the list.
