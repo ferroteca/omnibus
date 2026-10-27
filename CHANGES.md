@@ -6,6 +6,7 @@ Omnibus is based on MAME 0.289. This file lists the changes Omnibus makes to MAM
 
 * H8: add the H-8-17 hard-sectored floppy controller. A setting models the HA-8-8 ROM disable modification. The H-8-17 and the H89 H-88-1 controller now share code in `h17_fdc_base`.
 * H8: gate the H-8-5 console interrupt with /DTR.
+* H8: add the H-8-4 four port serial card: four INS8250s, each with an RS-232 port, address jumpers (320, 330, 340 or 350 octal) and an interrupt jumper. Port 4 ships switched off, because HDOS moves its console to an 8250 it finds at 350 octal.
 * H8: add the WH-8-37 soft-sectored floppy controller, with its port base and Z-37 jumpers. The Z-67 half of the card is not modelled. The WH-8-37 and the H89 Z-89-37 now share code in `z37_fdc_base`. The HA-8-6 gains an `h37` interrupt socket option for the WH-8-37 cable in U38, and maps the H-17 half of XCON8 at 1800-1FFF with PAM-37, which calls into it.
 * H8/H89: the interrupt controller gives the highest pending level priority, as the 74LS148 on both CPU boards does. Before, the lowest level won, so the 2 mSec clock at level 1 came ahead of every card on the bus.
 * H89 bus: a card that asks the I/O decoder for select lines its slot does not carry gets no ports. Before, it got the whole I/O space.
