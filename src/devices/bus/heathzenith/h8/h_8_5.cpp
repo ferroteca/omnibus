@@ -50,6 +50,7 @@ protected:
 	virtual void device_start() override ATTR_COLD;
 	virtual void device_reset() override ATTR_COLD;
 	virtual void device_add_mconfig(machine_config &config) override ATTR_COLD;
+	virtual ioport_constructor device_input_ports() const override ATTR_COLD;
 	virtual void map_io(address_space_installer & space) override ATTR_COLD;
 
 	void uart_rts(u8 data);
@@ -66,6 +67,9 @@ protected:
 	required_device<rs232_port_device>     m_rs232;
 	required_device<cassette_image_device> m_cass_player;
 	required_device<cassette_image_device> m_cass_recorder;
+	required_device<clock_device>          m_console_rx_clock;
+	required_device<clock_device>          m_console_tx_clock;
+	required_ioport                        m_jumpers;
 
 	u8   m_cass_data[4];
 	bool m_cassbit;
@@ -82,6 +86,9 @@ h_8_5_device::h_8_5_device(const machine_config &mconfig, const char *tag, devic
 	, m_rs232(*this, "rs232")
 	, m_cass_player(*this, "cassette_player")
 	, m_cass_recorder(*this, "cassette_recorder")
+	, m_console_rx_clock(*this, "console_rx_clock")
+	, m_console_tx_clock(*this, "console_tx_clock")
+	, m_jumpers(*this, "JUMPERS")
 {
 }
 
@@ -194,6 +201,13 @@ void h_8_5_device::device_reset()
 	m_uart->write_cts(0);
 	m_uart->write_dsr(0);
 	m_uart->write_rxd(0);
+
+	// Console UART clock is 16X the baud rate.
+	static constexpr u32 BAUD[8] = { 110, 150, 300, 600, 1200, 2400, 4800, 9600 };
+	ioport_value const jumpers(m_jumpers->read());
+
+	m_console_rx_clock->set_unscaled_clock(BAUD[jumpers & 0x07] * 16);
+	m_console_tx_clock->set_unscaled_clock(BAUD[(jumpers >> 3) & 0x07] * 16);
 }
 
 void h_8_5_device::map_io(address_space_installer & space)
@@ -210,12 +224,43 @@ void h_8_5_device::map_io(address_space_installer & space)
 }
 
 
-// The usual baud rate is 600. The H8 supported baud rates from 110 to
-// 9600. You can change the baud rate if it is changed here and in the
-// other places that specify 600 baud.
+// The SER RX and SER TX jumpers pick the console's receive and transmit
+// rates from eight taps, 110 to 9600 baud.  The manual (595-2032-03, page
+// 28) says to match the terminal and gives 600 for the H9.  The default
+// terminal here is an H19, whose SW401 defaults to 9600, so both jumpers
+// default to 9600.
+static INPUT_PORTS_START( h_8_5 )
+	PORT_START("JUMPERS")
+	PORT_CONFNAME(0x07, 0x07, "SER RX baud rate jumper")
+	PORT_CONFSETTING(   0x00, "110")
+	PORT_CONFSETTING(   0x01, "150")
+	PORT_CONFSETTING(   0x02, "300")
+	PORT_CONFSETTING(   0x03, "600")
+	PORT_CONFSETTING(   0x04, "1200")
+	PORT_CONFSETTING(   0x05, "2400")
+	PORT_CONFSETTING(   0x06, "4800")
+	PORT_CONFSETTING(   0x07, "9600")
+	PORT_CONFNAME(0x38, 0x38, "SER TX baud rate jumper")
+	PORT_CONFSETTING(   0x00, "110")
+	PORT_CONFSETTING(   0x08, "150")
+	PORT_CONFSETTING(   0x10, "300")
+	PORT_CONFSETTING(   0x18, "600")
+	PORT_CONFSETTING(   0x20, "1200")
+	PORT_CONFSETTING(   0x28, "2400")
+	PORT_CONFSETTING(   0x30, "4800")
+	PORT_CONFSETTING(   0x38, "9600")
+INPUT_PORTS_END
+
+ioport_constructor h_8_5_device::device_input_ports() const
+{
+	return INPUT_PORTS_NAME(h_8_5);
+}
+
+// These reach only a generic serial terminal on the port.  The H19 takes
+// its rate from its own SW401.
 static DEVICE_INPUT_DEFAULTS_START(h19)
-	DEVICE_INPUT_DEFAULTS("RS232_RXBAUD",   0xff, RS232_BAUD_600)
-	DEVICE_INPUT_DEFAULTS("RS232_TXBAUD",   0xff, RS232_BAUD_600)
+	DEVICE_INPUT_DEFAULTS("RS232_RXBAUD",   0xff, RS232_BAUD_9600)
+	DEVICE_INPUT_DEFAULTS("RS232_TXBAUD",   0xff, RS232_BAUD_9600)
 	DEVICE_INPUT_DEFAULTS("RS232_DATABITS", 0xff, RS232_DATABITS_8)
 	DEVICE_INPUT_DEFAULTS("RS232_PARITY",   0xff, RS232_PARITY_NONE)
 	DEVICE_INPUT_DEFAULTS("RS232_STOPBITS", 0xff, RS232_STOPBITS_1)
@@ -242,10 +287,9 @@ void h_8_5_device::device_add_mconfig(machine_config &config)
 	// The RxRdy pin on the 8251 USART is normally jumpered to generate a level 3 i/o interrupt.
 	m_console->rxrdy_handler().set(FUNC(h_8_5_device::console_rxrdy_w));
 
-	// Console UART clock is 16X the baud rate.
-	clock_device &console_clock(CLOCK(config, "console_clock", 600*16));
-	console_clock.signal_handler().set(m_console, FUNC(i8251_device::write_txc));
-	console_clock.signal_handler().append(m_console, FUNC(i8251_device::write_rxc));
+	// device_reset sets these from the baud rate jumpers
+	CLOCK(config, m_console_rx_clock, 9600*16).signal_handler().set(m_console, FUNC(i8251_device::write_rxc));
+	CLOCK(config, m_console_tx_clock, 9600*16).signal_handler().set(m_console, FUNC(i8251_device::write_txc));
 
 	rs232_port_device &rs232(RS232_PORT(config, "rs232", default_rs232_devices, "h19"));
 	rs232.rxd_handler().set(m_console, FUNC(i8251_device::write_rxd));
