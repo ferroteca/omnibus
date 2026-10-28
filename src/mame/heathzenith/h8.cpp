@@ -298,10 +298,11 @@ static DEVICE_INPUT_DEFAULTS_START( h8_cpu_8080_ha_8_8 )
 	DEVICE_INPUT_DEFAULTS( "CONFIG", 0x04, 0x04 )
 DEVICE_INPUT_DEFAULTS_END
 
-// MAME enables the first keyboard by tag, which is the front panel in P1.
-// On a machine with a terminal, the terminal is the keyboard in use, so enable
-// the terminal's keyboard and disable the front panel's.  A saved cfg file
-// loads after this and overrides it.
+// natural_keyboard enables every keypad, and an enabled keypad still reads its
+// host keys in natural keyboard mode.  On a machine with a terminal, a digit
+// typed for the terminal would then also press that digit on the front panel.
+// So disable the front panel and enable the terminal's keyboard.  A saved cfg
+// file loads after this and overrides it.
 void h8_state::machine_start()
 {
 	if (!m_terminal_keyboard)
