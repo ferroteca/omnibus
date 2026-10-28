@@ -523,7 +523,7 @@ ROM_END
 // Driver
 
 //    YEAR  NAME        PARENT  COMPAT  MACHINE     INPUT  CLASS,    INIT        COMPANY          FULLNAME                                      FLAGS
-COMP( 1977, h8,         0,      0,      h8,         h8,    h8_state, empty_init, "Heath Company", "Heathkit H8 Digital Computer",                MACHINE_SUPPORTS_SAVE )
+COMP( 1977, h8,         0,      0,      h8,         h8,    h8_state, empty_init, "Heath Company", "H-8",                                         MACHINE_SUPPORTS_SAVE )
 COMP( 1977, h8_system1, h8,     0,      h8_system1, h8,    h8_state, empty_init, "Heath Company", "H-8 System One",                              MACHINE_SUPPORTS_SAVE )
 COMP( 1977, h8_system2, h8,     0,      h8_system2, h8,    h8_state, empty_init, "Heath Company", "H-8 System Two",                              MACHINE_SUPPORTS_SAVE )
 COMP( 1979, h8_hks82,   h8,     0,      h8_hks82,   h8,    h8_state, empty_init, "Heath Company", "H-8 HKS-82 Advanced Computer System",         MACHINE_SUPPORTS_SAVE )
