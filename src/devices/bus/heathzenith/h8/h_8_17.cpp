@@ -100,7 +100,11 @@ void h_8_17_device::map_mem(address_space_installer & space)
 	// MRD (bus pin 28) to U20B pin 5 and U20D pin 12, and C15 runs from that
 	// node to ground.  U20B makes /ROM EN and U20D enables RAM reads.  The
 	// wire holds both inputs low, so a modified card never drives the bus
-	// for 1400-1FFF.
+	// for 1400-1FFF.  The same manual fits a 444-70 (XCON8) on the CPU board
+	// and starts the memory boards at 0.  The upper half of the 444-70 is the
+	// H-17 ROM 444-19, and XCON8 copies it to RAM at 1800-1FFF before it
+	// disables the ROM, so with the ROM disabled all of 0000-1FFF is RAM
+	// (page 24), as CP/M needs.
 	if (BIT(m_config->read(), 0))
 	{
 		return;
