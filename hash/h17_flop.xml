@@ -196,4 +196,20 @@ license:CC0-1.0
 		</part>
 	</software>
 
+	<!-- https://sebhc.github.io/sebhc/software/Applications/SEBHCArchive_Vol1_20090625.zip -->
+	<software name="h17_hugdisk2">
+		<description>HUG Software Disk II: Games 1</description>
+		<year>1980</year>
+		<publisher>Heath Users Group</publisher>
+		<notes>This is a non-bootable HDOS 1.5 disk. Boot HDOS from another disk, then put this disk in a second drive. The disk holds two machine code games, Space War and Life, and five Benton Harbor BASIC games: Death Star, Market, Camel, Football and Qubic. README.DOC describes each game and names its author. Football uses the H8 front panel keypad and LEDs, so it runs only on the H8. The files are dated 31-Mar-80.</notes>
+		<info name="partno" value="885-1029"/>
+		<info name="usage" value="To run a machine code game, type SPACEWAR or LIFE at the HDOS prompt. To run a BASIC game, start BASIC, type OLD&quot;name&quot;, then type RUN. MARKINST holds the instructions for Market, so load and run it before MARKET."/>
+
+		<part name="flop1" interface="floppy_5_25">
+			<dataarea name="flop" size="102400">
+				<rom name="885-1029_disk_ii_games.h8d" size="102400" crc="4026762e" sha1="69222d9c977937ffed8a3885bd857f10cb56e33d"/>
+			</dataarea>
+		</part>
+	</software>
+
 </softwarelist>
