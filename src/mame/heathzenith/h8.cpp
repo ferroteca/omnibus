@@ -9,8 +9,10 @@
     MACHINES
     --------
     Heath sold the H8 from 1977 to 1983, and the cards changed a great deal
-    over that time.  Each machine here is one of the packaged systems from the
-    Heathkit catalogs.  A package had fixed contents and one order number.
+    over that time.  Each machine here starts from one of the packaged systems
+    in the Heathkit catalogs.  A package had fixed contents and one order
+    number.  h8_system2 adds memory to its package, and h8_wh837 is not a
+    package.
 
         h8        Kit H8 ($375, catalogs #817 to #840) and one H8-1 Memory
                   Board with 4K at 2000-2FFF.  There is no I/O card and no
@@ -27,44 +29,41 @@
                   cassette interface and no terminal.  It has no machine of
                   its own.
 
-        h8_system1  H8 System One, "the minimum recommended H8 system"
-                  (catalog #817 $1239.75, #818 and #819 $1244.50; #840 calls
-                  it the Minimum Complete System, $1210.75): H8, one H8-1 4K
-                  Memory, one H8-3 4K Chip Set, H8-5 Serial I/O and Cassette
-                  Interface, H9 Video Terminal and ECP-3801 Cassette
-                  Recorder/Player.  The H8-3 fills the H8-1 out to 8K, at
-                  2000-3FFF.  The H9 is on the H-8-5 at 600 baud.  8K runs
-                  BASIC, HASL-8, TED-8 and BUG-8.
+        h8_system2  H8 System Two (24K).  H8 System Two was "a deluxe H8
+                  system" (catalog #817 $1472.50, #818 and #819 $1477.25;
+                  #840 calls it the Recommended System): H8, two H8-1 4K
+                  Memories, two H8-3 4K Chip Sets, H8-5 Serial I/O and
+                  Cassette Interface, H9 Video Terminal, ECP-3801 Cassette
+                  Player/Recorder and H8-13 Extended BASIC on cassette.  That
+                  is 16K, at 2000-5FFF.  The Cassette Operating System and
+                  Extended Benton Harbor BASIC need 16K (catalog #853).
 
-                  The later HKS-81 Hobbyist Computer System ($995, catalogs
-                  #845 to #848) had the same cards and the H-8-18 cassette
-                  software.  It has no machine of its own.
+                  This machine adds a third H8-1 with its H8-3, for 24K at
+                  2000-7FFF.  Some cassette programs need more than 16K:
+                  Space Wars on HUG Software Tape I stops with "! ERROR - MEM
+                  OVR AT LINE 60" in 16K.  The H9 is on the H-8-5 at 600 baud.
 
-        h8_system2  H8 System Two, "a deluxe H8 system" (catalog #817
-                  $1472.50, #818 and #819 $1477.25; #840 calls it the
-                  Recommended System): H8, two H8-1 4K Memories, two H8-3 4K
-                  Chip Sets, H8-5 Serial I/O and Cassette Interface, H9 Video
-                  Terminal, ECP-3801 Cassette Player/Recorder and H8-13
-                  Extended BASIC on cassette.  That is 16K, at 2000-5FFF.
-                  16K runs everything on the cassette software list.  The
-                  Cassette Operating System and Extended Benton Harbor BASIC
-                  need 16K (catalog #853).
-
-        h8_hks82  HKS-82 Advanced Computer System, $1995: H8, H-8-4 Four-Port
-                  Serial I/O, WH-8-16 16K Memory, H-17 Floppy Disk, H19 CRT
-                  Terminal and H-8-17 HDOS Software.  The Fall 1979 and
-                  Christmas 1979 catalogs list these contents.  HDOS 1.x runs
-                  in 16K.  HDOS 2.0 stops with "?01 HDOS REQUIRES AT LEAST
-                  24K!".
-
-                  WHS-83 (#848 and #849, 1980, $1495 and then $1595) was the
-                  same cards assembled, with no terminal.  It has no machine of
-                  its own.  Pick the terminal, or none, from the slot menu.
+                  H8 System One, "the minimum recommended H8 system" (catalog
+                  #817 $1239.75, #818 and #819 $1244.50; #840 calls it the
+                  Minimum Complete System, $1210.75), had one H8-1 and one
+                  H8-3, for 8K at 2000-3FFF, and the same I/O.  8K runs BASIC,
+                  HASL-8, TED-8 and BUG-8.  The later HKS-81 Hobbyist Computer
+                  System ($995, catalogs #845 to #848) had the same cards and
+                  the H-8-18 cassette software.  Neither has a machine of its
+                  own.
 
         h8_hks85  HKS-85 H-8 Hobbyist/Word Processing System, $1795, catalogs
                   #857 to #860 (1982): H8, three WH-8-16 16K Memory Boards
                   (48K), H-8-4, HA-8-8 Extended Configuration Option,
                   100K-byte H-17 and an H-19 Video Terminal.
+
+                  The earlier HKS-82 Advanced Computer System ($1995, Fall
+                  1979 and Christmas 1979 catalogs) had one WH-8-16 for 16K,
+                  an H-8-4, an H-17, an H19 and the H-8-17 HDOS software, and
+                  no HA-8-8.  HDOS 1.x runs in 16K.  HDOS 2.0 stops with "?01
+                  HDOS REQUIRES AT LEAST 24K!".  WHS-83 (#848 and #849, 1980,
+                  $1495 and then $1595) was the same cards assembled, with no
+                  terminal.  Neither has a machine of its own.
 
         h8_wh837  Not a catalog package.  This is the most an H8 could hold
                   from Heath's own cards: an HA-8-6 Z80 CPU with PAM-37, 64K
@@ -144,9 +143,7 @@ public:
 		{}
 
 	void h8(machine_config &config);
-	void h8_system1(machine_config &config);
 	void h8_system2(machine_config &config);
-	void h8_hks82(machine_config &config);
 	void h8_hks85(machine_config &config);
 	void h8_wh837(machine_config &config);
 
@@ -236,6 +233,10 @@ DEVICE_INPUT_DEFAULTS_END
 
 static DEVICE_INPUT_DEFAULTS_START( h8_h_8_1_at_4000 )
 	DEVICE_INPUT_DEFAULTS( "JUMPERS", 0x07, 0x02 )
+DEVICE_INPUT_DEFAULTS_END
+
+static DEVICE_INPUT_DEFAULTS_START( h8_h_8_1_at_6000 )
+	DEVICE_INPUT_DEFAULTS( "JUMPERS", 0x07, 0x03 )
 DEVICE_INPUT_DEFAULTS_END
 
 void h8_state::h_8_5_with_h9(device_t *device)
@@ -374,12 +375,17 @@ void h8_state::h8(machine_config &config)
 	m_p2->set_option_device_input_defaults("cpu8080", DEVICE_INPUT_DEFAULTS_NAME(h8_cpu_8080));
 }
 
-void h8_state::h8_system1(machine_config &config)
+void h8_state::h8_system2(machine_config &config)
 {
 	h8(config);
 
-	// The H-8-3 chip set fills the H-8-1 out to 8K, at 2000-3FFF.
+	// Three H-8-1 boards, each filled out to 8K by its H-8-3 chip set, at
+	// 2000-7FFF.  The System Two package had the first two.
 	H8BUS_SLOT(config.replace(), m_p3, "h8bus", h8_cards, "h_8_1");
+	H8BUS_SLOT(config.replace(), "p4", "h8bus", h8_cards, "h_8_1")
+		.set_option_device_input_defaults("h_8_1", DEVICE_INPUT_DEFAULTS_NAME(h8_h_8_1_at_4000));
+	H8BUS_SLOT(config.replace(), "p5", "h8bus", h8_cards, "h_8_1")
+		.set_option_device_input_defaults("h_8_1", DEVICE_INPUT_DEFAULTS_NAME(h8_h_8_1_at_6000));
 
 	// The H-8-5 is the tape interface and the console, with an H9 at 600 baud.
 	H8BUS_SLOT(config.replace(), m_p9, "h8bus", h8_cards, "h_8_5");
@@ -389,21 +395,18 @@ void h8_state::h8_system1(machine_config &config)
 	m_terminal_keyboard = true;
 }
 
-void h8_state::h8_system2(machine_config &config)
-{
-	h8_system1(config);
-
-	// A second H-8-1 with its H-8-3, at 4000-5FFF.
-	H8BUS_SLOT(config.replace(), "p4", "h8bus", h8_cards, "h_8_1")
-		.set_option_device_input_defaults("h_8_1", DEVICE_INPUT_DEFAULTS_NAME(h8_h_8_1_at_4000));
-}
-
-void h8_state::h8_hks82(machine_config &config)
+void h8_state::h8_hks85(machine_config &config)
 {
 	h8(config);
 
-	// One WH-8-16 in place of the H-8-1.  Its switches default to 2000-5FFF.
+	// Three WH-8-16 boards from 0000.  The RAM under the monitor ROM is only
+	// usable when a card asserts /ROM DISABLE, and the HA-8-8 does that.
 	H8BUS_SLOT(config.replace(), m_p3, "h8bus", h8_cards, "wh_8_16");
+	m_p3->set_option_device_input_defaults("wh_8_16", DEVICE_INPUT_DEFAULTS_NAME(h8_wh_8_16_at_0000));
+	H8BUS_SLOT(config.replace(), "p4", "h8bus", h8_cards, "wh_8_16")
+		.set_option_device_input_defaults("wh_8_16", DEVICE_INPUT_DEFAULTS_NAME(h8_wh_8_16_at_4000));
+	H8BUS_SLOT(config.replace(), "p5", "h8bus", h8_cards, "wh_8_16")
+		.set_option_device_input_defaults("wh_8_16", DEVICE_INPUT_DEFAULTS_NAME(h8_wh_8_16_at_8000));
 
 	// The H-17 operation manual puts the controller near the back of the
 	// bus.  P8 is the last free slot before the serial card in P9.
@@ -418,26 +421,6 @@ void h8_state::h8_hks82(machine_config &config)
 	H8BUS_SLOT(config.replace(), m_p9, "h8bus", h8_cards, "h_8_4");
 	m_p9->set_option_machine_config("h_8_4", h_8_4_with_h19);
 	m_p9->set_option_device_input_defaults("h_8_4", DEVICE_INPUT_DEFAULTS_NAME(h8_h_8_4_console));
-
-	// Standard PAM-8 cannot boot a disk.  The H-17 operation manual says to
-	// enter 030 000 in the PC and press GO.  PAM-8/GO presets the PC to
-	// 030 000, so a boot is one key press.
-	m_p2->set_option_default_bios("cpu8080", "pam8go");
-
-	m_terminal_keyboard = true;
-}
-
-void h8_state::h8_hks85(machine_config &config)
-{
-	h8_hks82(config);
-
-	// Three WH-8-16 boards from 0000.  The RAM under the monitor ROM is only
-	// usable when a card asserts /ROM DISABLE, and the HA-8-8 does that.
-	m_p3->set_option_device_input_defaults("wh_8_16", DEVICE_INPUT_DEFAULTS_NAME(h8_wh_8_16_at_0000));
-	H8BUS_SLOT(config.replace(), "p4", "h8bus", h8_cards, "wh_8_16")
-		.set_option_device_input_defaults("wh_8_16", DEVICE_INPUT_DEFAULTS_NAME(h8_wh_8_16_at_4000));
-	H8BUS_SLOT(config.replace(), "p5", "h8bus", h8_cards, "wh_8_16")
-		.set_option_device_input_defaults("wh_8_16", DEVICE_INPUT_DEFAULTS_NAME(h8_wh_8_16_at_8000));
 
 	H8BUS_SLOT(config.replace(), m_p10, "h8bus", h8_p10_cards, "ha_8_8");
 	m_p10->set_option_device_input_defaults("ha_8_8", DEVICE_INPUT_DEFAULTS_NAME(h8_ha_8_8_auto));
@@ -465,6 +448,8 @@ void h8_state::h8_hks85(machine_config &config)
 	// dump: it was assembled from a listing dated 27-Oct-81, and its text says
 	// the original part number is unknown.
 	m_p2->set_option_default_bios("cpu8080", "xcon8");
+
+	m_terminal_keyboard = true;
 }
 
 // Set PAM-37 to boot the device at port 170 by itself.  "Port 170 device"
@@ -480,7 +465,7 @@ void h8_state::ha_8_6_with_h37(device_t *device)
 	device->subdevice<heath_intr_socket>("intr_socket")->set_default_option("h37");
 }
 
-// Two drives, as on the HKS-82 and HKS-85.  The connectors are z37_fdc:0 to 3.
+// Two drives, as on the HKS-85.  The connectors are z37_fdc:0 to 3.
 void h8_state::wh_8_37_two_drives(device_t *device)
 {
 	device->subdevice<floppy_connector>("z37_fdc:2")->set_default_option(nullptr);
@@ -513,9 +498,7 @@ void h8_state::h8_wh837(machine_config &config)
 ROM_START( h8 )
 ROM_END
 
-#define rom_h8_system1 rom_h8
 #define rom_h8_system2 rom_h8
-#define rom_h8_hks82 rom_h8
 #define rom_h8_hks85 rom_h8
 #define rom_h8_wh837 rom_h8
 
@@ -525,8 +508,6 @@ ROM_END
 
 //    YEAR  NAME        PARENT  COMPAT  MACHINE     INPUT  CLASS,    INIT        COMPANY          FULLNAME                                      FLAGS
 COMP( 1977, h8,         0,      0,      h8,         h8,    h8_state, empty_init, "Heath Company", "H-8",                                         MACHINE_SUPPORTS_SAVE )
-COMP( 1977, h8_system1, h8,     0,      h8_system1, h8,    h8_state, empty_init, "Heath Company", "H-8 System One",                              MACHINE_SUPPORTS_SAVE )
-COMP( 1977, h8_system2, h8,     0,      h8_system2, h8,    h8_state, empty_init, "Heath Company", "H-8 System Two",                              MACHINE_SUPPORTS_SAVE )
-COMP( 1979, h8_hks82,   h8,     0,      h8_hks82,   h8,    h8_state, empty_init, "Heath Company", "H-8 HKS-82 Advanced Computer System",         MACHINE_SUPPORTS_SAVE )
+COMP( 1977, h8_system2, h8,     0,      h8_system2, h8,    h8_state, empty_init, "Heath Company", "H-8 System Two (24K)",                        MACHINE_SUPPORTS_SAVE )
 COMP( 1982, h8_hks85,   h8,     0,      h8_hks85,   h8,    h8_state, empty_init, "Heath Company", "H-8 HKS-85 Hobbyist/Word Processing System",  MACHINE_SUPPORTS_SAVE )
 COMP( 1983, h8_wh837,   h8,     0,      h8_wh837,   h8,    h8_state, empty_init, "Heath Company", "H-8 with WH-8-37",                            MACHINE_SUPPORTS_SAVE )
