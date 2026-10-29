@@ -5,9 +5,10 @@
 Support for Heathkit H8/H88 H8T cassette images
 
 
-Standard Kansas City format (300 baud)
-
-TODO - investigate 1200 buad support, H8 should support it, but H88 does not.
+Kansas City format at 1200 baud: a 0 bit is one cycle of 1200 Hz and a 1
+bit is two cycles of 2400 Hz.  Heath recorded its software tapes at 1200
+baud.  The H-88-5 runs only at 1200 baud; the H-8-5 has jumpers for 300 or
+1200 baud.
 
 We output a leader, followed by the contents of the H8T file.
 
@@ -48,7 +49,7 @@ cassette_image::error heath_h8t_load(cassette_image *cassette)
 	auto const MODULATE =
 			[&cassette, &err, &time_index, &time_displacement] (unsigned value)
 			{
-				for (int i = 0; (i < (value ? 8 : 4)); i++)
+				for (int i = 0; (i < (value ? 2 : 1)); i++)
 				{
 					err = cassette->put_modulated_data_bit(0, time_index, value, heath_h8t_modulation, &time_displacement);
 					if (cassette_image::error::SUCCESS == err)

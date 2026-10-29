@@ -70,6 +70,8 @@ protected:
 	required_device<cassette_image_device> m_cass_recorder;
 	required_device<clock_device>          m_console_rx_clock;
 	required_device<clock_device>          m_console_tx_clock;
+	required_device<clock_device>          m_tape_rx_clock;
+	required_device<clock_device>          m_tape_tx_clock;
 	required_ioport                        m_jumpers;
 
 	u8   m_cass_data[4];
@@ -89,6 +91,8 @@ h_8_5_device::h_8_5_device(const machine_config &mconfig, const char *tag, devic
 	, m_cass_recorder(*this, "cassette_recorder")
 	, m_console_rx_clock(*this, "console_rx_clock")
 	, m_console_tx_clock(*this, "console_tx_clock")
+	, m_tape_rx_clock(*this, "tape_rx_clock")
+	, m_tape_tx_clock(*this, "tape_tx_clock")
 	, m_jumpers(*this, "JUMPERS")
 {
 }
@@ -209,6 +213,11 @@ void h_8_5_device::device_reset()
 
 	m_console_rx_clock->set_unscaled_clock(BAUD[jumpers & 0x07] * 16);
 	m_console_tx_clock->set_unscaled_clock(BAUD[(jumpers >> 3) & 0x07] * 16);
+
+	// The tape UART clock is also 16X the baud rate: 19.2 kHz for 1200 baud
+	// and 4.8 kHz for 300.
+	m_tape_rx_clock->set_unscaled_clock(BIT(jumpers, 6) ? 1200 * 16 : 300 * 16);
+	m_tape_tx_clock->set_unscaled_clock(BIT(jumpers, 7) ? 1200 * 16 : 300 * 16);
 }
 
 void h_8_5_device::map_io(address_space_installer & space)
@@ -250,6 +259,18 @@ static INPUT_PORTS_START( h_8_5 )
 	PORT_CONFSETTING(   0x28, "2400")
 	PORT_CONFSETTING(   0x30, "4800")
 	PORT_CONFSETTING(   0x38, "9600")
+	// The tape jumpers pick 300 or 1200 baud.  The manual (595-2151, page 5)
+	// says Heath software tapes require 1200 baud, so both default to 1200.
+	// On the card the Tape RX jumpers and C107 set the centre frequency of the
+	// receive clock's phase-locked loop; this models the clock it locks to.
+	// The manual calls the low Tape RX setting 600 baud, but its
+	// specifications, and the Tape TX jumper, give 300.
+	PORT_CONFNAME(0x40, 0x40, "Tape RX baud rate jumpers")
+	PORT_CONFSETTING(   0x00, "300 (L)")
+	PORT_CONFSETTING(   0x40, "1200 (H)")
+	PORT_CONFNAME(0x80, 0x80, "Tape TX baud rate jumper")
+	PORT_CONFSETTING(   0x00, "300")
+	PORT_CONFSETTING(   0x80, "1200")
 INPUT_PORTS_END
 
 ioport_constructor h_8_5_device::device_input_ports() const
@@ -275,9 +296,9 @@ void h_8_5_device::device_add_mconfig(machine_config &config)
 	m_uart->rts_handler().set(FUNC(h_8_5_device::uart_rts));
 	m_uart->txempty_handler().set(FUNC(h_8_5_device::uart_tx_empty));
 
-	clock_device &cassette_clock(CLOCK(config, "cassette_clock", 4800));
-	cassette_clock.signal_handler().set(m_uart, FUNC(i8251_device::write_txc));
-	cassette_clock.signal_handler().append(m_uart, FUNC(i8251_device::write_rxc));
+	// device_reset sets these from the tape baud rate jumpers
+	CLOCK(config, m_tape_rx_clock, 1200*16).signal_handler().set(m_uart, FUNC(i8251_device::write_rxc));
+	CLOCK(config, m_tape_tx_clock, 1200*16).signal_handler().set(m_uart, FUNC(i8251_device::write_txc));
 
 	I8251(config, m_console);
 
@@ -312,9 +333,10 @@ void h_8_5_device::device_add_mconfig(machine_config &config)
 	m_cass_recorder->add_route(ALL_OUTPUTS, "mono", 0.15);
 	m_cass_recorder->set_interface("h88_cass_recorder");
 
-	// The same tapes the H-88-5 reads.  Both cards are an 8251 clocked at 4800
-	// Hz answering at 370-371 octal, running Kansas City at 1200 baud, so the
-	// media is interchangeable - and the list is H8 software to begin with:
+	// The same tapes the H-88-5 reads.  Both cards are an 8251 answering at
+	// 370-371 octal, running Kansas City at 1200 baud with the tape jumpers at
+	// their defaults, so the media is interchangeable - and the list is H8
+	// software to begin with:
 	// BUG-8, Extended Benton Harbor BASIC, the H8 assembler and the H8 editor,
 	// which is Heath's H-8-18 cassette package.  Catalog #853 spells the
 	// pairing out, one Cassette Operating System needing "an H-8-5 Serial I/O

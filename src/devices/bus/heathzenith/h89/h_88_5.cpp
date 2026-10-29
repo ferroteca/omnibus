@@ -180,7 +180,9 @@ void h_88_5_device::device_add_mconfig(machine_config &config)
 	m_uart->rts_handler().set(FUNC(h_88_5_device::uart_rts));
 	m_uart->txempty_handler().set(FUNC(h_88_5_device::uart_tx_empty));
 
-	clock_device &cassette_clock(CLOCK(config, "cassette_clock", 4800));
+	// The H-88 operation manual gives a fixed data rate of 120 bytes/second,
+	// which is 1200 baud.  The UART clock is 16X that.
+	clock_device &cassette_clock(CLOCK(config, "cassette_clock", 1200*16));
 	cassette_clock.signal_handler().set(m_uart, FUNC(i8251_device::write_txc));
 	cassette_clock.signal_handler().append(m_uart, FUNC(i8251_device::write_rxc));
 
