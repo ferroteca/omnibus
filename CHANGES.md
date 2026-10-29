@@ -40,6 +40,10 @@ Omnibus is based on MAME 0.289. This file lists the changes Omnibus makes to MAM
 * A driver can name its boot device with `driver_device::boot_device()`. The launch software menu then offers only the lists under that device. The answer comes from the system's default switch settings and its saved cfg file.
 * An image option that names a software list the machine does not have is cleared with a warning, and the drive starts empty. Before, MAME stopped with a fatal error. This happened when a slot change removed the card that held the list.
 
+### Options
+
+* `skip_gameinfo` defaults to on, so the system information screen does not show at startup. Use `-noskip_gameinfo` to show it.
+
 ## Merged into MAME after 0.289
 
 MAME has merged these changes, so they will leave this list when Omnibus moves to a later MAME release.

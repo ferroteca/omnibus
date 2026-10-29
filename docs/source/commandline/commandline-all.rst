@@ -4006,12 +4006,12 @@ Core Misc Options
 
     Forces MAME to skip displaying the system info screen.
 
-    The default is OFF (**-noskip_gameinfo**).
+    The default is ON (**-skip_gameinfo**).
 
     Example:
         .. code-block:: bash
 
-            mame samsho5 -skip_gameinfo
+            mame samsho5 -noskip_gameinfo
 
 .. _mame-commandline-uifont:
 
