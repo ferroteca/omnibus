@@ -262,7 +262,8 @@ static INPUT_PORTS_START( h_8_5 )
 	// The tape jumpers pick 300 or 1200 baud.  The manual (595-2151, page 5)
 	// says Heath software tapes require 1200 baud, so both default to 1200.
 	// On the card the Tape RX jumpers and C107 set the centre frequency of the
-	// receive clock's phase-locked loop; this models the clock it locks to.
+	// receive clock's phase-locked loop.  The emulation sets the receive clock
+	// to the rate that loop locks to.
 	// The manual calls the low Tape RX setting 600 baud, but its
 	// specifications, and the Tape TX jumper, give 300.
 	PORT_CONFNAME(0x40, 0x40, "Tape RX baud rate jumpers")

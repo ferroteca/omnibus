@@ -325,7 +325,8 @@ void device_sound_interface::sound_before_devices_init()
 
 void device_sound_interface::sound_after_devices_init()
 {
-	// The cfg file loads after this, and its device_volume overrides it.
+	// The cfg file loads after sound_after_devices_init() runs, so a saved
+	// device_volume replaces the default set here.
 	if(m_default_user_output_gain != 1.0f && outputs())
 		set_user_output_gain(m_default_user_output_gain);
 

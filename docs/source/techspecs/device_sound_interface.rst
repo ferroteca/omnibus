@@ -109,6 +109,19 @@ user interface (the sliders) and are saved in the game configuration.
 The other gains are for driver/device use, and are saved in save
 states.
 
+.. code-block:: C++
+
+    device_sound_interface &set_default_user_output_gain(float gain);
+    float default_user_output_gain() const;
+
+A device can instead set the per-device user output gain it starts
+with, at configuration time, with ``set_default_user_output_gain``.
+The default is 1.0.  The gain is applied once the streams are linked,
+before the game configuration loads, so a saved value overrides it.
+The game configuration saves the per-device user output gain only
+when it differs from the device's default.  The cassette device uses
+it to start at -15 dB.
+
 
 2.5 Routing setup
 ~~~~~~~~~~~~~~~~~
