@@ -1474,7 +1474,7 @@ void sound_manager::config_save(config_type cfg_type, util::xml::data_node *pare
 			// Don't add microphones, speakers or devices without outputs
 			if(dynamic_cast<sound_io_device *>(&snd) || !snd.outputs())
 				continue;
-			if(snd.user_output_gain() != 1.0) {
+			if(snd.user_output_gain() != snd.default_user_output_gain()) {
 				util::xml::data_node *const lv_node = parentnode->add_child("device_volume", nullptr);
 				lv_node->set_attribute("device", snd.device().tag());
 				lv_node->set_attribute_float("gain", snd.user_output_gain());

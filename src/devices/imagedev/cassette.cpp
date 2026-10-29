@@ -53,6 +53,9 @@ cassette_image_device::cassette_image_device(const machine_config &mconfig, cons
 	m_interface(nullptr),
 	m_stereo(false)
 {
+	// Tape tones are loud next to the rest of a machine's sound, so the volume
+	// slider starts at -15 dB.  A cfg file can still change it.
+	set_default_user_output_gain(std::pow(10.0F, -15.0F / 20.0F));
 }
 
 //-------------------------------------------------

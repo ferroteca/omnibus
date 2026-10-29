@@ -72,6 +72,10 @@ public:
 	device_sound_interface &add_route(u32 output, device_sound_interface &target, double gain, u32 channel = 0);
 	device_sound_interface &reset_routes() { m_route_list.clear(); return *this; }
 
+	// the user gain the device starts with, before a cfg file changes it
+	device_sound_interface &set_default_user_output_gain(float gain) { m_default_user_output_gain = gain; return *this; }
+	float default_user_output_gain() const { return m_default_user_output_gain; }
+
 	// sound stream update overrides
 	virtual void sound_stream_update(sound_stream &stream) = 0;
 
@@ -120,6 +124,7 @@ private:
 	u32 m_sound_requested_inputs;
 	u32 m_sound_requested_outputs;
 	bool m_sound_hook;
+	float m_default_user_output_gain;
 
 	void sound_before_devices_init();
 	void sound_after_devices_init();

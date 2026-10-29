@@ -27,7 +27,8 @@ device_sound_interface::device_sound_interface(const machine_config &mconfig, de
 	m_sound_requested_outputs_mask(0),
 	m_sound_requested_inputs(0),
 	m_sound_requested_outputs(0),
-	m_sound_hook(false)
+	m_sound_hook(false),
+	m_default_user_output_gain(1.0f)
 {
 }
 
@@ -324,6 +325,10 @@ void device_sound_interface::sound_before_devices_init()
 
 void device_sound_interface::sound_after_devices_init()
 {
+	// The cfg file loads after this, and its device_volume overrides it.
+	if(m_default_user_output_gain != 1.0f && outputs())
+		set_user_output_gain(m_default_user_output_gain);
+
 	for(sound_route &route : routes()) {
 		auto [si, ii] = route.m_interface->input_to_stream_input(route.m_input);
 		if(!si)

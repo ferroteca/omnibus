@@ -45,6 +45,11 @@ Omnibus is based on MAME 0.289. This file lists the changes Omnibus makes to MAM
 
 * `skip_gameinfo` defaults to on, so the system information screen does not show at startup. Use `-noskip_gameinfo` to show it.
 
+### Sound
+
+* Cassette volume starts at -15 dB on every machine. This is the cassette device's slider in Slider Controls, and a cfg file can still change it.
+* A sound device can set the volume its slider starts at with `set_default_user_output_gain()`. A cfg file saves a device's volume only when it differs from that default. Before, a cfg file saved any volume other than 0 dB.
+
 ## Merged into MAME after 0.289
 
 MAME has merged these changes, so they will leave this list when Omnibus moves to a later MAME release.
