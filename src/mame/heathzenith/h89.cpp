@@ -14,6 +14,34 @@
       - Z-89 - same as Heath's H89, but assembled
       - Z-90 - came with a soft-sectored floppy disk controller
 
+    THE H-89 AND Z-90 HAVE MORE MEMORY AND DRIVES THAN THEY SHIPPED WITH
+    --------------------------------------------------------------------
+    Two defaults here are later than the machines' introduction.  Both are
+    deliberate: they let the machines run the software people use, not only
+    what the first machines shipped could run.
+
+      64K of RAM.  The H-89 shipped with 16K.  64K came from the WH-88-16
+        Wired Memory Expansion Board, an ordinary catalog part (catalog #857
+        sells it in the Small Business system), so any owner could buy it.
+
+      Three floppy drives.  One was built into the cabinet.  The second and
+        third came in an external HS-77 (hard-sectored) or HS-37 (soft-
+        sectored) box, sold separately: catalog #860's ordering table prices
+        one H-17-1 at 100K and two at 200K.  Three is the most the controller
+        handles, and a second drive is needed to copy disks.
+
+    Ask before changing either default.  The H-88 defaults to 48K on purpose:
+    its specification gives 48K as the most the cassette model takes.
+
+    ORG-0 does not depend on the 64K.  Software turns it on with GPP bit 5,
+    "Latched bit MEM 1 H on memory expansion connector".  machine_start sets
+    up the ORG-0 view at every memory size: it maps the top 8K of RAM to
+    0000-1FFF.  So MTR-89 needs no ROM change to boot CP/M 2.2.02 and 2.2.04
+    from a hard-sectored disk here; both reach "STANDARD SYSTEM (Y OR N)?".
+    Catalog #853 says "H-89 systems require H-88-7 ROM Kit" for CP/M.  It is
+    not known what that kit changed on a real H-89; the emulated H-89 runs
+    these CP/M images without it.
+
     Monitor Commands (for MTR-90):
       B Boot
       C Convert (number)
@@ -205,8 +233,10 @@ public:
 
 
 /**
- * Heathkit H89
- *  - Z-89-37 Soft-sectored Floppy Controller
+ * Heathkit H-89 / Zenith Z-90
+ *  H-89: H-88-1 Hard-sectored Floppy Controller
+ *  Z-90: Z-89-37 Soft-sectored Floppy Controller, and an H-88-1 alongside it
+ *        for the hard-sectored disks
  *
  */
 class h89_state : public h89_base_state
@@ -218,6 +248,7 @@ public:
 	}
 
 	void h89(machine_config &config);
+	void z90(machine_config &config);
 };
 
 class h89_cdr_state : public h89_base_state
@@ -391,7 +422,17 @@ static INPUT_PORTS_START( h88 )
 INPUT_PORTS_END
 
 
-static INPUT_PORTS_START( h89 )
+// Every machine in the family uses these ports.  SW501 means different things
+// to different monitor ROMs, so the "Switch SW501 Definitions" config below
+// picks which set of labels applies.  It defaults to MTR-90 here, and each
+// machine with a different default ROM changes it to match.
+//
+// Boot mode defaults to Auto, not the Normal the machines shipped with, so a
+// bootable disk boots at power-up without B at the H: prompt.  With no disk,
+// MTR-89 prints "?" and shows the H: prompt, and MTR-88 shows the H: prompt.
+// MTR-90 shows nothing and waits: it boots the disk as soon as one is
+// inserted.
+static INPUT_PORTS_START( h89_base )
 
 	PORT_START("SW501")
 	// Generic definition
@@ -422,12 +463,12 @@ static INPUT_PORTS_START( h89 )
 
 	// MTR-90 (444-84 or 444-142)
 	PORT_DIPNAME( 0x03, 0x00, "Disk I/O #2" )                        PORT_DIPLOCATION("SW501:1,2")     PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x04)
-	PORT_DIPSETTING(    0x00, "H-88-1 (Not yet implemented)" )
+	PORT_DIPSETTING(    0x00, "H-88-1 (H17)" )
 	PORT_DIPSETTING(    0x01, "H/Z-47 (Not yet implemented)" )
 	PORT_DIPSETTING(    0x02, "Z-67 (Not yet implemented)" )
 	PORT_DIPSETTING(    0x03, "Undefined" )
 	PORT_DIPNAME( 0x0c, 0x00, "Disk I/O #1" )                        PORT_DIPLOCATION("SW501:3,4")     PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x04)
-	PORT_DIPSETTING(    0x00, "H-89-37" )
+	PORT_DIPSETTING(    0x00, "H-89-37 (H37)" )
 	PORT_DIPSETTING(    0x04, "H/Z-47 (Not yet implemented)" )
 	PORT_DIPSETTING(    0x08, "Z-67 (Not yet implemented)" )
 	PORT_DIPSETTING(    0x0c, "Undefined" )
@@ -440,13 +481,13 @@ static INPUT_PORTS_START( h89 )
 	PORT_DIPNAME( 0x40, 0x00, "Console Baud rate" )                  PORT_DIPLOCATION("SW501:7")       PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x04)
 	PORT_DIPSETTING(    0x00, "9600" )
 	PORT_DIPSETTING(    0x40, "19200" )
-	PORT_DIPNAME( 0x80, 0x00, "Boot mode" )                          PORT_DIPLOCATION("SW501:8")       PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x04)
+	PORT_DIPNAME( 0x80, 0x80, "Boot mode" )                          PORT_DIPLOCATION("SW501:8")       PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x04)
 	PORT_DIPSETTING(    0x00, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x80, "Auto" )
 
 	// MTR-89 (444-62)
 	PORT_DIPNAME( 0x03, 0x00, "Disk I/O #2" )                        PORT_DIPLOCATION("SW501:1,2")     PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x08)
-	PORT_DIPSETTING(    0x00, "H-88-1" )
+	PORT_DIPSETTING(    0x00, "H-88-1 (H17)" )
 	PORT_DIPSETTING(    0x01, "H/Z-47" )
 	PORT_DIPSETTING(    0x02, "Undefined" )
 	PORT_DIPSETTING(    0x03, "Undefined" )
@@ -464,18 +505,18 @@ static INPUT_PORTS_START( h89 )
 	PORT_DIPNAME( 0x40, 0x00, "Console Baud rate" )                  PORT_DIPLOCATION("SW501:7")       PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x08)
 	PORT_DIPSETTING(    0x00, "9600" )
 	PORT_DIPSETTING(    0x40, "19200" )
-	PORT_DIPNAME( 0x80, 0x00, "Boot mode" )                          PORT_DIPLOCATION("SW501:8")       PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x08)
+	PORT_DIPNAME( 0x80, 0x80, "Boot mode" )                          PORT_DIPLOCATION("SW501:8")       PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x08)
 	PORT_DIPSETTING(    0x00, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x80, "Auto" )
 
 	// MMS 444-84B (and possibly 444-84A)
 	PORT_DIPNAME( 0x03, 0x00, "Disk I/O #2" )                        PORT_DIPLOCATION("SW501:1,2")     PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x0c)
-	PORT_DIPSETTING(    0x00, "H-88-1" )
+	PORT_DIPSETTING(    0x00, "H-88-1 (H17)" )
 	PORT_DIPSETTING(    0x01, "H/Z-47 (Not yet implemented)" )
 	PORT_DIPSETTING(    0x02, "MMS 77320 SASI or Z-67 (Not yet implemented)" )
 	PORT_DIPSETTING(    0x03, "MMS 77422 Network Controller" )
 	PORT_DIPNAME( 0x0c, 0x00, "Disk I/O #1" )                        PORT_DIPLOCATION("SW501:3,4")     PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x0c)
-	PORT_DIPSETTING(    0x00, "H-89-37" )
+	PORT_DIPSETTING(    0x00, "H-89-37 (H37)" )
 	PORT_DIPSETTING(    0x04, "H/Z-47 (Not yet implemented)" )
 	PORT_DIPSETTING(    0x08, "MMS 77320 SASI or Z-67 (Not yet implemented)" )
 	PORT_DIPSETTING(    0x0c, "MMS 77422 Network Controller" )
@@ -488,7 +529,7 @@ static INPUT_PORTS_START( h89 )
 	PORT_DIPSETTING(    0x50, "reserved for future use" )
 	PORT_DIPSETTING(    0x60, "MMS Network (77422)" )
 	PORT_DIPSETTING(    0x70, "Use MMS I/O board Config Port" )
-	PORT_DIPNAME( 0x80, 0x00, "Boot mode" )                          PORT_DIPLOCATION("SW501:8")       PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x0c)
+	PORT_DIPNAME( 0x80, 0x80, "Boot mode" )                          PORT_DIPLOCATION("SW501:8")       PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x0c)
 	PORT_DIPSETTING(    0x00, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x80, "Auto" )
 
@@ -519,7 +560,7 @@ static INPUT_PORTS_START( h89 )
 	PORT_DIPNAME( 0x40, 0x00, "Have a LLL controller installed" )    PORT_DIPLOCATION("SW501:7")       PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x10)
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x80, 0x00, "Boot mode" )                          PORT_DIPLOCATION("SW501:8")       PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x10)
+	PORT_DIPNAME( 0x80, 0x80, "Boot mode" )                          PORT_DIPLOCATION("SW501:8")       PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x10)
 	PORT_DIPSETTING(    0x00, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x80, "Auto" )
 
@@ -551,7 +592,7 @@ static INPUT_PORTS_START( h89 )
 	PORT_DIPNAME( 0x40, 0x00, "? Have a LLL controller installed" )  PORT_DIPLOCATION("SW501:7")       PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x14)
 	PORT_DIPSETTING(    0x00, "? No" )
 	PORT_DIPSETTING(    0x40, "? Yes" )
-	PORT_DIPNAME( 0x80, 0x00, "Boot mode" )                          PORT_DIPLOCATION("SW501:8")       PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x14)
+	PORT_DIPNAME( 0x80, 0x80, "Boot mode" )                          PORT_DIPLOCATION("SW501:8")       PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x14)
 	PORT_DIPSETTING(    0x00, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x80, "Auto" )
 
@@ -567,7 +608,7 @@ static INPUT_PORTS_START( h89 )
 	PORT_DIPNAME( 0x20, 0x20, "Perform memory test at start" )       PORT_DIPLOCATION("SW501:6")       PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x18)
 	PORT_DIPSETTING(    0x20, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x40, 0x00, "Boot mode" )                          PORT_DIPLOCATION("SW501:7")       PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x18)
+	PORT_DIPNAME( 0x40, 0x40, "Boot mode" )                          PORT_DIPLOCATION("SW501:7")       PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x18)
 	PORT_DIPSETTING(    0x00, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x40, "Auto" )
 	PORT_DIPNAME( 0x80, 0x00, "Baud Rate" )                          PORT_DIPLOCATION("SW501:8")       PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x18)
@@ -576,12 +617,12 @@ static INPUT_PORTS_START( h89 )
 
 	// SigmaSoft's SigmaROM
 	PORT_DIPNAME( 0x03, 0x00, "Disk I/O #2" )                        PORT_DIPLOCATION("SW501:1,2")     PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x1c)
-	PORT_DIPSETTING(    0x00, "H-88-1" )
+	PORT_DIPSETTING(    0x00, "H-88-1 (H17)" )
 	PORT_DIPSETTING(    0x01, "H/Z-47" )
 	PORT_DIPSETTING(    0x02, "WD1002 Hard Disk" )
 	PORT_DIPSETTING(    0x03, "WD1002 Floppy Disk" )
 	PORT_DIPNAME( 0x0c, 0x00, "Disk I/O #1" )                        PORT_DIPLOCATION("SW501:3,4")     PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x1c)
-	PORT_DIPSETTING(    0x00, "H-89-37" )
+	PORT_DIPSETTING(    0x00, "H-89-37 (H37)" )
 	PORT_DIPSETTING(    0x04, "H/Z-47" )
 	PORT_DIPSETTING(    0x08, "WD1002 Hard Disk" )
 	PORT_DIPSETTING(    0x0c, "WD1002 Floppy Disk" )
@@ -594,13 +635,13 @@ static INPUT_PORTS_START( h89 )
 	PORT_DIPNAME( 0x40, 0x00, "Console Baud rate" )                  PORT_DIPLOCATION("SW501:7")       PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x1c)
 	PORT_DIPSETTING(    0x00, "9600" )
 	PORT_DIPSETTING(    0x40, "19200" )
-	PORT_DIPNAME( 0x80, 0x00, "Boot mode" )                          PORT_DIPLOCATION("SW501:8")       PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x1c)
+	PORT_DIPNAME( 0x80, 0x80, "Boot mode" )                          PORT_DIPLOCATION("SW501:8")       PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x1c)
 	PORT_DIPSETTING(    0x00, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x80, "Auto" )
 
 	// CDR8390 ROM
 	PORT_DIPNAME( 0x03, 0x00, "Disk I/O #2" )                        PORT_DIPLOCATION("SW501:1,2")     PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x20)
-	PORT_DIPSETTING(    0x00, "H-88-1" )
+	PORT_DIPSETTING(    0x00, "H-88-1 (H17)" )
 	PORT_DIPSETTING(    0x01, "undefined" )
 	PORT_DIPSETTING(    0x02, "undefined" )
 	PORT_DIPSETTING(    0x03, "undefined" )
@@ -618,7 +659,7 @@ static INPUT_PORTS_START( h89 )
 	PORT_DIPNAME( 0x40, 0x00, "Console Baud rate" )                  PORT_DIPLOCATION("SW501:7")       PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x20)
 	PORT_DIPSETTING(    0x00, "9600" )
 	PORT_DIPSETTING(    0x40, "19200" )
-	PORT_DIPNAME( 0x80, 0x00, "Boot mode" )                          PORT_DIPLOCATION("SW501:8")       PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x20)
+	PORT_DIPNAME( 0x80, 0x80, "Boot mode" )                          PORT_DIPLOCATION("SW501:8")       PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x20)
 	PORT_DIPSETTING(    0x00, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x80, "Auto" )
 
@@ -638,6 +679,42 @@ static INPUT_PORTS_START( h89 )
 	PORT_CONFSETTING(   0x18, "Ultimeth MTRHEX-2k")
 	PORT_CONFSETTING(   0x1c, "SigmaROM")
 	PORT_CONFSETTING(   0x20, "CDR8390 ROM")
+
+INPUT_PORTS_END
+
+
+static INPUT_PORTS_START( h89 )
+	PORT_INCLUDE( h89_base )
+
+	// The H-89's default ROM is MTR-89, so SW501 gets the MTR-89 labels.  At
+	// the default settings MTR-89 and MTR-90 read SW501 the same way, so this
+	// changes only the labels in the menu.  The MTR-90 labels would offer a
+	// soft-sectored controller on SW501:3,4, and MTR-89 cannot boot one.
+	PORT_MODIFY("CONFIG")
+	PORT_CONFNAME(0x3c, 0x08, "Switch SW501 Definitions")
+	PORT_CONFSETTING(   0x00, "Generic" )
+	PORT_CONFSETTING(   0x04, "Heath MTR-90")
+	PORT_CONFSETTING(   0x08, "Heath MTR-89")
+	PORT_CONFSETTING(   0x0c, "MMS 444-84B/444-84A")
+	PORT_CONFSETTING(   0x10, "Kres KMR-100")
+	PORT_CONFSETTING(   0x14, "Ultimeth MTRHEX-4k")
+	PORT_CONFSETTING(   0x18, "Ultimeth MTRHEX-2k")
+	PORT_CONFSETTING(   0x1c, "SigmaROM")
+	PORT_CONFSETTING(   0x20, "CDR8390 ROM")
+
+INPUT_PORTS_END
+
+
+static INPUT_PORTS_START( z90 )
+	PORT_INCLUDE( h89_base )
+
+	// Boot from the Z-89-37.  MTR-90 treats the Z-89-37 as Disk I/O #1 and the
+	// H-88-1 as Disk I/O #2.  The H-89 default boots #2, which on a Z-90 is
+	// the H-88-1, and the Z-90 has no H-88-1 unless one is added.
+	PORT_MODIFY("SW501")
+	PORT_DIPNAME( 0x10, 0x10, "Primary Boot from" )                  PORT_DIPLOCATION("SW501:5")       PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x04)
+	PORT_DIPSETTING(    0x00, "Disk I/O #2" )
+	PORT_DIPSETTING(    0x10, "Disk I/O #1" )
 
 INPUT_PORTS_END
 
@@ -1099,6 +1176,12 @@ void h88_state::h88(machine_config &config)
 
 	H89BUS_RIGHT_SLOT(config.replace(), "p504", "h89bus", [this](device_slot_interface &device) { h89_right_cards(device); }, "h_88_5");
 
+	// The H-88 shipped with 16K.  Its specification gives 48K as the most it
+	// takes, so it defaults to 48K, which lets more software run.  64K stays
+	// on the list: the WH-88-16 board that gives 64K was an ordinary catalog
+	// part.
+	m_ram->set_default_size("48K").set_extra_options("16K,32K,64K");
+
 	LOGSETUP("%s: about to call set_io_prom_tag\n", FUNCNAME);
 	H89BUS_IO_DECODER_SOCKET(config, "h89bus:io_decoder", io_decoder_options, "444_43");
 }
@@ -1107,10 +1190,28 @@ void h89_state::h89(machine_config &config)
 {
 	h89_base(config);
 
+	m_intr_socket->set_default_option("original");
+	m_intr_socket->set_fixed(true);
+
+	H89BUS_RIGHT_SLOT(config.replace(), "p506", "h89bus", [this](device_slot_interface &device) { h89_right_p506_cards(device); }, "h17fdc").set_p506_signalling(true);
+
+	LOGSETUP("%s: about to call set_io_prom_tag\n", FUNCNAME);
+	H89BUS_IO_DECODER_SOCKET(config, "h89bus:io_decoder", io_decoder_options, "444_43");
+}
+
+void h89_state::z90(machine_config &config)
+{
+	h89_base(config);
+
 	m_intr_socket->set_default_option("h37");
 	m_intr_socket->set_fixed(true);
 
 	H89BUS_RIGHT_SLOT(config.replace(), "p504", "h89bus", [this](device_slot_interface &device) { h89_right_cards(device); }, "z37fdc");
+
+	// P506 keeps the we_pullup from h89_base, because the Z-90 was sold with
+	// only the Z-89-37.  An H-88-1 can go in P506.  MTR-90 then sees it as
+	// Disk I/O #2, and the H-88-1 holds the floppy RAM write protect line in
+	// place of the pullup.
 
 	LOGSETUP("%s: about to call set_io_prom_tag\n", FUNCNAME);
 	H89BUS_IO_DECODER_SOCKET(config, "h89bus:io_decoder", io_decoder_options, "444_61");
@@ -1211,7 +1312,9 @@ ROM_END
 
 ROM_START( h89 )
 	ROM_REGION( 0x2000, "maincpu", ROMREGION_ERASEFF )
-	ROM_DEFAULT_BIOS("mtr90")
+	// The H-89 shipped with MTR-89 (444-62).  MTR-90 came later, with the Z-90,
+	// so it is an upgrade on the H-89.
+	ROM_DEFAULT_BIOS("mtr89")
 
 	ROM_H17
 
@@ -1310,9 +1413,9 @@ ROM_END
 } // anonymous namespace
 
 
-//    year  name           parent compat machine        input class                init        company                fullname                   flags
-COMP( 1979, h88,           h89,   0,     h88,           h88,  h88_state,           empty_init, "Heath Company",       "H-88",                    MACHINE_SUPPORTS_SAVE)
-COMP( 1979, h89,           0,     0,     h89,           h89,  h89_state,           empty_init, "Heath Company",       "H-89",                    MACHINE_SUPPORTS_SAVE)
-COMP( 1981, h89_cdr,       h89,   0,     h89_cdr,       h89,  h89_cdr_state,       empty_init, "Heath Company",       "H-89 with CDR Equipment", MACHINE_SUPPORTS_SAVE)
-COMP( 1981, h89_mms,       h89,   0,     h89_mms,       h89,  h89_mms_state,       empty_init, "Heath Company",       "H-89 with MMS Equipment", MACHINE_SUPPORTS_SAVE)
-COMP( 1981, z90,           h89,   0,     h89,           h89,  h89_state,           empty_init, "Zenith Data Systems", "Z-90",                    MACHINE_SUPPORTS_SAVE)
+//    year  name           parent compat machine        input      class                init        company                fullname                   flags
+COMP( 1979, h88,           h89,   0,     h88,           h88,       h88_state,           empty_init, "Heath Company",       "H-88",                    MACHINE_SUPPORTS_SAVE)
+COMP( 1979, h89,           0,     0,     h89,           h89,       h89_state,           empty_init, "Heath Company",       "H-89",                    MACHINE_SUPPORTS_SAVE)
+COMP( 1981, h89_cdr,       h89,   0,     h89_cdr,       h89_base,  h89_cdr_state,       empty_init, "Heath Company",       "H-89 with CDR Equipment", MACHINE_SUPPORTS_SAVE)
+COMP( 1981, h89_mms,       h89,   0,     h89_mms,       h89_base,  h89_mms_state,       empty_init, "Heath Company",       "H-89 with MMS Equipment", MACHINE_SUPPORTS_SAVE)
+COMP( 1981, z90,           h89,   0,     z90,           z90,       h89_state,           empty_init, "Zenith Data Systems", "Z-90",                    MACHINE_SUPPORTS_SAVE)
