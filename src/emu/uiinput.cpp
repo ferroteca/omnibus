@@ -10,6 +10,8 @@
 
 #include "emu.h"
 #include "uiinput.h"
+
+#include "input.h"
 #include "render.h"
 
 
@@ -201,6 +203,7 @@ bool ui_input_manager::pressed_repeat(int code, int speed)
 
 	/* get the status of this key (assumed to be only in the defaults) */
 	assert(code > IPT_UI_FIRST && code < IPT_UI_LAST);
+	m_tested.set(code);
 	pressed = (m_seqpressed[code] == SEQ_PRESSED_TRUE);
 
 	/* if down, handle it specially */
@@ -232,7 +235,65 @@ bool ui_input_manager::pressed_repeat(int code, int speed)
 	else
 		m_next_repeat[code] = 0;
 
+	/* the emulated system does not see the host inputs for a reported press until they are released */
+	if (pressed)
+		claim(code, false);
+
 	return pressed;
+}
+
+
+/*-------------------------------------------------
+    held - return true while the given user
+    interface sequence is held down
+-------------------------------------------------*/
+
+bool ui_input_manager::held(int code)
+{
+	assert(code > IPT_UI_FIRST && code < IPT_UI_LAST);
+	m_tested.set(code);
+	if (m_seqpressed[code] != SEQ_PRESSED_TRUE)
+		return false;
+
+	claim(code, false);
+	return true;
+}
+
+
+/*-------------------------------------------------
+    claim - claim for the UI the host inputs
+    mapped to a user interface sequence
+-------------------------------------------------*/
+
+void ui_input_manager::claim(int code, bool provisional)
+{
+	machine().input().claim_for_ui(machine().ioport().type_seq(ioport_type(code)), provisional);
+}
+
+
+/*-------------------------------------------------
+    update_claims - update the host inputs the UI
+    has taken, once per frame
+-------------------------------------------------*/
+
+void ui_input_manager::update_claims()
+{
+	machine().input().update_ui_claims();
+
+	// the I/O ports read the host before the UI handler runs again.  A UI input the
+	// handler tested may be down now, but pressed() has not reported it yet.  Claim
+	// it provisionally so the emulated system does not see it in between;
+	// update_ui_claims() drops the claim at the next update if the UI does not act on it
+	if (m_presses_enabled)
+	{
+		for (int code = IPT_UI_FIRST + 1; code < IPT_UI_LAST; code++)
+		{
+			if (m_tested.test(code) && (m_seqpressed[code] != SEQ_PRESSED_RESET) && (m_next_repeat[code] == 0) && machine().ioport().type_pressed(ioport_type(code)))
+				claim(code, true);
+		}
+	}
+
+	m_tested.reset();
 }
 
 

@@ -566,7 +566,7 @@ void digital_joystick::frame_update()
 		for (const std::reference_wrapper<ioport_field> &i : m_field[direction])
 		{
 			machine = &i.get().machine();
-			if (machine->input().seq_pressed(i.get().seq(SEQ_TYPE_STANDARD)))
+			if (machine->input().seq_pressed_unclaimed(i.get().seq(SEQ_TYPE_STANDARD)))
 				m_current |= 1 << direction;
 		}
 
@@ -1226,7 +1226,7 @@ void ioport_field::frame_update(ioport_value &result)
 	}
 
 	// if UI is active, ignore digital inputs
-	if (machine().ui().is_menu_active())
+	if (manager().ui_menu_active())
 		return;
 
 	// if user input is locked out here, bail
@@ -1239,7 +1239,7 @@ void ioport_field::frame_update(ioport_value &result)
 	}
 
 	// if the state changed, look for switch down/switch up
-	bool curstate = m_digital_value || machine().input().seq_pressed(seq());
+	bool curstate = m_digital_value || machine().input().seq_pressed_unclaimed(seq());
 	bool changed = false;
 	if (curstate != m_live->last)
 	{
@@ -1781,6 +1781,7 @@ ioport_port_live::ioport_port_live(ioport_port &port) :
 ioport_manager::ioport_manager(running_machine &machine) :
 	m_machine(machine),
 	m_safe_to_read(false),
+	m_ui_menu_active(false),
 	m_last_frame_time(attotime::zero),
 	m_last_delta_nsec(0),
 	m_playback_accumulated_speed(0),
@@ -2168,6 +2169,9 @@ void ioport_manager::frame_update()
 	// track the duration of the previous frame
 	m_last_delta_nsec = (curtime - m_last_frame_time).as_attoseconds() / ATTOSECONDS_PER_NANOSECOND;
 	m_last_frame_time = curtime;
+
+	// ask once per update whether a menu is active
+	m_ui_menu_active = machine().ui().is_menu_active();
 
 	// update the digital joysticks
 	for (digital_joystick &joystick : m_joystick_list)
@@ -3997,7 +4001,7 @@ void analog_field::frame_update(running_machine &machine)
 
 	// get the new raw analog value and its type
 	input_item_class itemclass;
-	s32 rawvalue = machine.input().seq_axis_value(m_field.seq(SEQ_TYPE_STANDARD), itemclass);
+	s32 rawvalue = machine.input().seq_axis_value_unclaimed(m_field.seq(SEQ_TYPE_STANDARD), itemclass);
 
 	// if we got an absolute input, it overrides everything else
 	if (itemclass == ITEM_CLASS_ABSOLUTE)
@@ -4065,7 +4069,7 @@ void analog_field::frame_update(running_machine &machine)
 	// if the decrement code sequence is pressed, add the key delta to
 	// the accumulated delta; also note that the last input was a digital one
 	bool keypressed = false;
-	if (machine.input().seq_pressed(m_field.seq(SEQ_TYPE_DECREMENT)))
+	if (machine.input().seq_pressed_unclaimed(m_field.seq(SEQ_TYPE_DECREMENT)))
 	{
 		keypressed = true;
 		if (m_delta != 0)
@@ -4077,7 +4081,7 @@ void analog_field::frame_update(running_machine &machine)
 	}
 
 	// same for the increment code sequence
-	if (machine.input().seq_pressed(m_field.seq(SEQ_TYPE_INCREMENT)))
+	if (machine.input().seq_pressed_unclaimed(m_field.seq(SEQ_TYPE_INCREMENT)))
 	{
 		keypressed = true;
 		if (m_delta)
