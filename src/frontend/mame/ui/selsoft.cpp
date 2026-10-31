@@ -657,7 +657,7 @@ bool menu_select_software::inkey_select(const event *menu_event)
 
 		if (audit_passed(swaudit))
 		{
-			if (!select_bios(*ui_swinfo, false) && !select_part(*swinfo, *ui_swinfo))
+			if (!select_part(*swinfo, *ui_swinfo) && !select_bios(*ui_swinfo, false))
 			{
 				reselect_last::reselect(true);
 				launch_system(drivlist.driver(), *ui_swinfo);

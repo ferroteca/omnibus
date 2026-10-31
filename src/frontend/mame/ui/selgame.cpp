@@ -702,7 +702,7 @@ bool menu_select_game::inkey_select_favorite(const event *menu_event)
 			if (audit_passed(swaudit))
 			{
 				reselect_last::reselect(true);
-				if (!select_bios(*ui_swinfo, false) && !select_part(*swinfo, *ui_swinfo))
+				if (!select_part(*swinfo, *ui_swinfo) && !select_bios(*ui_swinfo, false))
 					launch_system(drv.driver(), *ui_swinfo, ui_swinfo->part);
 				return false;
 			}

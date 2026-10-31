@@ -194,11 +194,11 @@ class menu_select_launch::bios_selection : public menu
 {
 public:
 	bios_selection(mame_ui_manager &mui, render_target &target, s_bios &&biosname, game_driver const &driver, bool inlist);
-	bios_selection(mame_ui_manager &mui, render_target &target, s_bios &&biosname, ui_software_info const &swinfo, bool inlist);
+	bios_selection(mame_ui_manager &mui, render_target &target, s_bios &&biosname, ui_software_info const &swinfo, bool inlist, std::string const &part = std::string());
 	virtual ~bios_selection() override;
 
 private:
-	bios_selection(mame_ui_manager &mui, render_target &target, s_bios &&biosname, void const *driver, bool software, bool inlist);
+	bios_selection(mame_ui_manager &mui, render_target &target, s_bios &&biosname, void const *driver, bool software, bool inlist, std::string const &part);
 
 	virtual void populate() override;
 	virtual bool handle(event const *ev) override;
@@ -206,6 +206,7 @@ private:
 	void const  *m_driver;
 	bool        m_software, m_inlist;
 	s_bios      m_bios;
+	std::string m_part;     // the part chosen in the parts menu, or empty
 };
 
 std::string menu_select_launch::reselect_last::s_driver;
@@ -313,7 +314,12 @@ bool menu_select_launch::software_parts::handle(event const *ev)
 		{
 			if ((void*)&elem == ev->itemref)
 			{
-				launch_system(ui(), *m_uiinfo.driver, &m_uiinfo, &elem.first, nullptr);
+				// ask for the BIOS after the part, so the two questions about the software come together
+				s_bios biosname;
+				if (!ui().options().skip_bios_menu() && has_multiple_bios(m_uiinfo, biosname))
+					menu::stack_push<bios_selection>(ui(), target(), std::move(biosname), m_uiinfo, false, elem.first);
+				else
+					launch_system(ui(), *m_uiinfo.driver, &m_uiinfo, &elem.first, nullptr);
 				break;
 			}
 		}
@@ -328,21 +334,22 @@ bool menu_select_launch::software_parts::handle(event const *ev)
 //-------------------------------------------------
 
 menu_select_launch::bios_selection::bios_selection(mame_ui_manager &mui, render_target &target, s_bios &&biosname, game_driver const &driver, bool inlist)
-	: bios_selection(mui, target, std::move(biosname), reinterpret_cast<void const *>(&driver), false, inlist)
+	: bios_selection(mui, target, std::move(biosname), reinterpret_cast<void const *>(&driver), false, inlist, std::string())
 {
 }
 
-menu_select_launch::bios_selection::bios_selection(mame_ui_manager &mui, render_target &target, s_bios &&biosname, ui_software_info const &swinfo, bool inlist)
-	: bios_selection(mui, target, std::move(biosname), reinterpret_cast<void const *>(&swinfo), true, inlist)
+menu_select_launch::bios_selection::bios_selection(mame_ui_manager &mui, render_target &target, s_bios &&biosname, ui_software_info const &swinfo, bool inlist, std::string const &part)
+	: bios_selection(mui, target, std::move(biosname), reinterpret_cast<void const *>(&swinfo), true, inlist, part)
 {
 }
 
-menu_select_launch::bios_selection::bios_selection(mame_ui_manager &mui, render_target &target, s_bios &&biosname, void const *driver, bool software, bool inlist)
+menu_select_launch::bios_selection::bios_selection(mame_ui_manager &mui, render_target &target, s_bios &&biosname, void const *driver, bool software, bool inlist, std::string const &part)
 	: menu(mui, target)
 	, m_driver(driver)
 	, m_software(software)
 	, m_inlist(inlist)
 	, m_bios(std::move(biosname))
+	, m_part(part)
 {
 	set_heading(_("Select System BIOS"));
 }
@@ -395,17 +402,10 @@ bool menu_select_launch::bios_selection::handle(event const *ev)
 				}
 				else
 				{
-					ui_software_info *ui_swinfo = (ui_software_info *)m_driver;
-					machine().options().set_value(OPTION_BIOS, elem.second, OPTION_PRIORITY_CMDLINE); // oh dear, relying on this persisting through the part selection menu
-					driver_enumerator drivlist(machine().options(), *ui_swinfo->driver);
-					drivlist.next();
-					software_list_device *swlist = software_list_device::find_by_name(*drivlist.config(), ui_swinfo->listname);
-					const software_info *swinfo = swlist->find(ui_swinfo->shortname);
-					if (!select_part(ui(), target(), *swinfo, *ui_swinfo))
-					{
-						reselect_last::reselect(true);
-						launch_system(ui(), drivlist.driver(), ui_swinfo, nullptr, &elem.second);
-					}
+					// the parts menu, if there was one, came before this one
+					ui_software_info const *ui_swinfo = (ui_software_info const *)m_driver;
+					reselect_last::reselect(true);
+					launch_system(ui(), *ui_swinfo->driver, ui_swinfo, m_part.empty() ? nullptr : &m_part, &elem.second);
 				}
 			}
 		}
