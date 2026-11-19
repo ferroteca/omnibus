@@ -15,10 +15,10 @@ authors:Paul Galbraith
 	picture on it are judged from the photographs, not measured.
 
 	The seven latching keys (BAUD RATE, FULL DUPLEX, OFF LINE, PLOT, AUTO
-	CARRY, SCROLL, SHORT FORM) are machine configuration settings in the
-	device.  Clicking one moves it to its other setting and it stays there,
-	which is how the real push-push switches behave, and a key that is
-	pushed in is drawn darker and lower.
+	CARRY, SCROLL, SHORT FORM) are toggle keys in the device's MODE port.
+	Clicking one moves it to its other position and it stays there, which
+	is how the real push-push switches behave.  A key that is pushed in is
+	drawn darker and lower.
 	-->
 
 	<element name="cabinet"><rect><color red="0.05" green="0.05" blue="0.05" /></rect></element>
@@ -218,20 +218,21 @@ authors:Paul Galbraith
 	</group>
 
 	<!--
-	The latching keys take the MODES bit in mask.  inputraw draws them from
-	the setting itself, so pushed in means on; without it a key is drawn from
-	whether the setting differs from its default, and SCROLL, AUTO CARRY,
-	FULL DUPLEX and BAUD RATE, which default to on, would show backwards.
+	The latching keys take the MODE bit in mask.  A set bit in MODE means
+	the key is pushed in, and inputraw draws the key from that bit.
+	Without it, a key is drawn from whether it differs from its default,
+	so SCROLL, AUTO CARRY, FULL DUPLEX and BAUD RATE, which start pushed
+	in, would show backwards.
 	-->
 	<group name="latch_word">
 		<bounds x="0" y="0" width="71" height="71" />
-		<element ref="latchcap" inputtag="MODES" inputmask="~mask~" inputraw="yes"><bounds x="0" y="0" width="71" height="71" /></element>
+		<element ref="latchcap" inputtag="MODE" inputmask="~mask~" inputraw="yes"><bounds x="0" y="0" width="71" height="71" /></element>
 		<element ref="~a~"><bounds x="8" y="26" width="55" height="14" /></element>
 	</group>
 
 	<group name="latch_words">
 		<bounds x="0" y="0" width="71" height="71" />
-		<element ref="latchcap" inputtag="MODES" inputmask="~mask~" inputraw="yes"><bounds x="0" y="0" width="71" height="71" /></element>
+		<element ref="latchcap" inputtag="MODE" inputmask="~mask~" inputraw="yes"><bounds x="0" y="0" width="71" height="71" /></element>
 		<element ref="~a~"><bounds x="8" y="17" width="55" height="14" /></element>
 		<element ref="~b~"><bounds x="8" y="35" width="55" height="14" /></element>
 	</group>
@@ -245,152 +246,148 @@ authors:Paul Galbraith
 
 	<group name="keyboard">
 		<!-- the row of function keys, to the right of the nameplate -->
-		<param name="mask" value="0x40" /><param name="a" value="w_BAUD" /><param name="b" value="w_RATE" />
+		<param name="mask" value="0x10" /><param name="a" value="w_BAUD" /><param name="b" value="w_RATE" />
 		<group ref="latch_words"><bounds x="639" y="1080" width="71" height="71" /></group>
-		<param name="mask" value="0x10" /><param name="a" value="w_FULL" /><param name="b" value="w_DUPLEX" />
+		<param name="mask" value="0x40" /><param name="a" value="w_FULL" /><param name="b" value="w_DUPLEX" />
 		<group ref="latch_words"><bounds x="714" y="1080" width="71" height="71" /></group>
 		<param name="mask" value="0x20" /><param name="a" value="w_OFF" /><param name="b" value="w_LINE" />
 		<group ref="latch_words"><bounds x="789" y="1080" width="71" height="71" /></group>
-		<param name="port" value="X4" /><param name="mask" value="0x80" /><param name="a" value="w_XMIT" /><param name="b" value="w_PAGE" />
+		<param name="port" value="FUNC" /><param name="mask" value="0x080" /><param name="a" value="w_XMIT" /><param name="b" value="w_PAGE" />
 		<group ref="key_words"><bounds x="864" y="1080" width="71" height="71" /></group>
 		<param name="mask" value="0x08" /><param name="a" value="w_PLOT" />
 		<group ref="latch_word"><bounds x="939" y="1080" width="71" height="71" /></group>
-		<param name="mask" value="0x02" /><param name="a" value="w_AUTO" /><param name="b" value="w_CARRY" />
+		<param name="mask" value="0x01" /><param name="a" value="w_AUTO" /><param name="b" value="w_CARRY" />
 		<group ref="latch_words"><bounds x="1014" y="1080" width="71" height="71" /></group>
-		<param name="port" value="MODIFIERS" /><param name="mask" value="0x10" /><param name="a" value="w_BREAK" />
+		<param name="port" value="FUNC" /><param name="mask" value="0x100" /><param name="a" value="w_BREAK" />
 		<group ref="key_word"><bounds x="1089" y="1080" width="71" height="71" /></group>
-		<param name="port" value="X4" /><param name="mask" value="0x40" /><param name="a" value="w_ERASE" /><param name="b" value="w_PAGE" />
+		<param name="port" value="FUNC" /><param name="mask" value="0x040" /><param name="a" value="w_ERASE" /><param name="b" value="w_PAGE" />
 		<group ref="key_words"><bounds x="1164" y="1080" width="71" height="71" /></group>
-		<param name="port" value="X4" /><param name="mask" value="0x20" /><param name="a" value="w_ERASE" /><param name="b" value="w_EOL" />
+		<param name="port" value="FUNC" /><param name="mask" value="0x020" /><param name="a" value="w_ERASE" /><param name="b" value="w_EOL" />
 		<group ref="key_words"><bounds x="1239" y="1080" width="71" height="71" /></group>
 
 		<!-- 1 to - and SCROLL -->
-		<param name="port" value="X0" />
-		<param name="mask" value="0x0001" /><param name="a" value="l_1" /><param name="s" value="l_excl" />
+		<param name="port" value="X9" /><param name="mask" value="0x80" /><param name="a" value="l_1" /><param name="s" value="l_excl" />
 		<group ref="key_shifted"><bounds x="226.5" y="1230" width="71" height="71" /></group>
-		<param name="mask" value="0x0002" /><param name="a" value="l_2" /><param name="s" value="l_quot" />
+		<param name="port" value="X8" /><param name="mask" value="0x80" /><param name="a" value="l_2" /><param name="s" value="l_quot" />
 		<group ref="key_shifted"><bounds x="301.5" y="1230" width="71" height="71" /></group>
-		<param name="mask" value="0x0004" /><param name="a" value="l_3" /><param name="s" value="l_hash" />
+		<param name="port" value="X7" /><param name="mask" value="0x80" /><param name="a" value="l_3" /><param name="s" value="l_hash" />
 		<group ref="key_shifted"><bounds x="376.5" y="1230" width="71" height="71" /></group>
-		<param name="mask" value="0x0008" /><param name="a" value="l_4" /><param name="s" value="l_dollar" />
+		<param name="port" value="X6" /><param name="mask" value="0x80" /><param name="a" value="l_4" /><param name="s" value="l_dollar" />
 		<group ref="key_shifted"><bounds x="451.5" y="1230" width="71" height="71" /></group>
-		<param name="mask" value="0x0010" /><param name="a" value="l_5" /><param name="s" value="l_percent" />
+		<param name="port" value="X6" /><param name="mask" value="0x01" /><param name="a" value="l_5" /><param name="s" value="l_percent" />
 		<group ref="key_shifted"><bounds x="526.5" y="1230" width="71" height="71" /></group>
-		<param name="mask" value="0x0020" /><param name="a" value="l_6" /><param name="s" value="l_amp" />
+		<param name="port" value="X5" /><param name="mask" value="0x01" /><param name="a" value="l_6" /><param name="s" value="l_amp" />
 		<group ref="key_shifted"><bounds x="601.5" y="1230" width="71" height="71" /></group>
-		<param name="mask" value="0x0040" /><param name="a" value="l_7" /><param name="s" value="l_apos" />
+		<param name="port" value="X5" /><param name="mask" value="0x80" /><param name="a" value="l_7" /><param name="s" value="l_apos" />
 		<group ref="key_shifted"><bounds x="676.5" y="1230" width="71" height="71" /></group>
-		<param name="mask" value="0x0080" /><param name="a" value="l_8" /><param name="s" value="l_lparen" />
+		<param name="port" value="X4" /><param name="mask" value="0x80" /><param name="a" value="l_8" /><param name="s" value="l_lparen" />
 		<group ref="key_shifted"><bounds x="751.5" y="1230" width="71" height="71" /></group>
-		<param name="mask" value="0x0100" /><param name="a" value="l_9" /><param name="s" value="l_rparen" />
+		<param name="port" value="X4" /><param name="mask" value="0x01" /><param name="a" value="l_9" /><param name="s" value="l_rparen" />
 		<group ref="key_shifted"><bounds x="826.5" y="1230" width="71" height="71" /></group>
-		<param name="mask" value="0x0200" /><param name="a" value="l_0" />
+		<param name="port" value="X3" /><param name="mask" value="0x01" /><param name="a" value="l_0" />
 		<group ref="key"><bounds x="901.5" y="1230" width="71" height="71" /></group>
-		<param name="mask" value="0x0400" /><param name="a" value="l_colon" /><param name="s" value="l_star" />
+		<param name="port" value="X3" /><param name="mask" value="0x80" /><param name="a" value="l_colon" /><param name="s" value="l_star" />
 		<group ref="key_shifted"><bounds x="976.5" y="1230" width="71" height="71" /></group>
-		<param name="mask" value="0x1000" /><param name="a" value="l_minus" /><param name="s" value="l_equals" />
+		<param name="port" value="X2" /><param name="mask" value="0x80" /><param name="a" value="l_minus" /><param name="s" value="l_equals" />
 		<group ref="key_shifted"><bounds x="1051.5" y="1230" width="71" height="71" /></group>
 		<param name="mask" value="0x04" /><param name="a" value="w_SCROLL" />
 		<group ref="latch_word"><bounds x="1126.5" y="1230" width="71" height="71" /></group>
 
 		<!-- ESC to up cursor -->
-		<param name="port" value="X2" /><param name="mask" value="0x0800" /><param name="a" value="w_ESC" />
+		<param name="port" value="X9" /><param name="mask" value="0x04" /><param name="a" value="w_ESC" />
 		<group ref="key_word"><bounds x="189" y="1305" width="71" height="71" /></group>
-		<param name="port" value="X1" />
-		<param name="mask" value="0x0001" /><param name="a" value="l_Q" />
+		<param name="port" value="X9" /><param name="mask" value="0x02" /><param name="a" value="l_Q" />
 		<group ref="key"><bounds x="264" y="1305" width="71" height="71" /></group>
-		<param name="mask" value="0x0002" /><param name="a" value="l_W" />
+		<param name="port" value="X8" /><param name="mask" value="0x02" /><param name="a" value="l_W" />
 		<group ref="key"><bounds x="339" y="1305" width="71" height="71" /></group>
-		<param name="mask" value="0x0004" /><param name="a" value="l_E" />
+		<param name="port" value="X7" /><param name="mask" value="0x02" /><param name="a" value="l_E" />
 		<group ref="key"><bounds x="414" y="1305" width="71" height="71" /></group>
-		<param name="mask" value="0x0008" /><param name="a" value="l_R" />
+		<param name="port" value="X6" /><param name="mask" value="0x02" /><param name="a" value="l_R" />
 		<group ref="key"><bounds x="489" y="1305" width="71" height="71" /></group>
-		<param name="mask" value="0x0010" /><param name="a" value="l_T" />
+		<param name="port" value="X6" /><param name="mask" value="0x04" /><param name="a" value="l_T" />
 		<group ref="key"><bounds x="564" y="1305" width="71" height="71" /></group>
-		<param name="mask" value="0x0020" /><param name="a" value="l_Y" />
+		<param name="port" value="X5" /><param name="mask" value="0x04" /><param name="a" value="l_Y" />
 		<group ref="key"><bounds x="639" y="1305" width="71" height="71" /></group>
-		<param name="mask" value="0x0040" /><param name="a" value="l_U" />
+		<param name="port" value="X5" /><param name="mask" value="0x02" /><param name="a" value="l_U" />
 		<group ref="key"><bounds x="714" y="1305" width="71" height="71" /></group>
-		<param name="mask" value="0x0080" /><param name="a" value="l_I" />
+		<param name="port" value="X4" /><param name="mask" value="0x02" /><param name="a" value="l_I" />
 		<group ref="key"><bounds x="789" y="1305" width="71" height="71" /></group>
-		<param name="mask" value="0x0100" /><param name="a" value="l_O" /><param name="s" value="l_underscore" />
+		<param name="port" value="X4" /><param name="mask" value="0x04" /><param name="a" value="l_O" /><param name="s" value="l_underscore" />
 		<group ref="key_shifted"><bounds x="864" y="1305" width="71" height="71" /></group>
-		<param name="mask" value="0x0200" /><param name="a" value="l_P" /><param name="s" value="l_at" />
+		<param name="port" value="X3" /><param name="mask" value="0x04" /><param name="a" value="l_P" /><param name="s" value="l_at" />
 		<group ref="key_shifted_right"><bounds x="939" y="1305" width="71" height="71" /></group>
-		<param name="port" value="X3" /><param name="mask" value="0x0800" /><param name="a" value="w_LINE" /><param name="b" value="w_FEED" />
+		<param name="port" value="X3" /><param name="mask" value="0x02" /><param name="a" value="w_LINE" /><param name="b" value="w_FEED" />
 		<group ref="key_words"><bounds x="1014" y="1305" width="71" height="71" /></group>
-		<param name="port" value="X2" /><param name="mask" value="0x1000" /><param name="a" value="w_RETURN" />
+		<param name="port" value="X2" /><param name="mask" value="0x02" /><param name="a" value="w_RETURN" />
 		<group ref="key_word"><bounds x="1089" y="1305" width="71" height="71" /></group>
-		<param name="mask" value="0x01" /><param name="a" value="w_SHORT" /><param name="b" value="w_FORM" />
+		<param name="mask" value="0x02" /><param name="a" value="w_SHORT" /><param name="b" value="w_FORM" />
 		<group ref="latch_words"><bounds x="1164" y="1305" width="71" height="71" /></group>
-		<param name="port" value="X4" /><param name="mask" value="0x02" /><param name="a" value="a_up" />
+		<param name="port" value="FUNC" /><param name="mask" value="0x001" /><param name="a" value="a_up" />
 		<group ref="key"><bounds x="1239" y="1305" width="71" height="71" /></group>
 
 		<!-- CTRL to right cursor -->
-		<param name="port" value="MODIFIERS" /><param name="mask" value="0x04" /><param name="a" value="w_CTRL" />
+		<param name="port" value="MODS" /><param name="mask" value="0x01" /><param name="a" value="w_CTRL" />
 		<group ref="key_word"><bounds x="226.5" y="1380" width="71" height="71" /></group>
-		<param name="port" value="X2" />
-		<param name="mask" value="0x0001" /><param name="a" value="l_A" />
+		<param name="port" value="X9" /><param name="mask" value="0x08" /><param name="a" value="l_A" />
 		<group ref="key"><bounds x="301.5" y="1380" width="71" height="71" /></group>
-		<param name="mask" value="0x0002" /><param name="a" value="l_S" />
+		<param name="port" value="X8" /><param name="mask" value="0x08" /><param name="a" value="l_S" />
 		<group ref="key"><bounds x="376.5" y="1380" width="71" height="71" /></group>
-		<param name="mask" value="0x0004" /><param name="a" value="l_D" />
+		<param name="port" value="X7" /><param name="mask" value="0x08" /><param name="a" value="l_D" />
 		<group ref="key"><bounds x="451.5" y="1380" width="71" height="71" /></group>
-		<param name="mask" value="0x0008" /><param name="a" value="l_F" />
+		<param name="port" value="X6" /><param name="mask" value="0x08" /><param name="a" value="l_F" />
 		<group ref="key"><bounds x="526.5" y="1380" width="71" height="71" /></group>
-		<param name="mask" value="0x0010" /><param name="a" value="l_G" />
+		<param name="port" value="X6" /><param name="mask" value="0x10" /><param name="a" value="l_G" />
 		<group ref="key"><bounds x="601.5" y="1380" width="71" height="71" /></group>
-		<param name="mask" value="0x0020" /><param name="a" value="l_H" />
+		<param name="port" value="X5" /><param name="mask" value="0x10" /><param name="a" value="l_H" />
 		<group ref="key"><bounds x="676.5" y="1380" width="71" height="71" /></group>
-		<param name="mask" value="0x0040" /><param name="a" value="l_J" />
+		<param name="port" value="X5" /><param name="mask" value="0x08" /><param name="a" value="l_J" />
 		<group ref="key"><bounds x="751.5" y="1380" width="71" height="71" /></group>
-		<param name="mask" value="0x0080" /><param name="a" value="l_K" /><param name="s" value="l_lbracket" />
+		<param name="port" value="X4" /><param name="mask" value="0x08" /><param name="a" value="l_K" /><param name="s" value="l_lbracket" />
 		<group ref="key_shifted"><bounds x="826.5" y="1380" width="71" height="71" /></group>
-		<param name="mask" value="0x0100" /><param name="a" value="l_L" /><param name="s" value="l_backslash" />
+		<param name="port" value="X4" /><param name="mask" value="0x10" /><param name="a" value="l_L" /><param name="s" value="l_backslash" />
 		<group ref="key_shifted"><bounds x="901.5" y="1380" width="71" height="71" /></group>
-		<param name="port" value="X0" /><param name="mask" value="0x0800" /><param name="a" value="l_semi" /><param name="s" value="l_plus" />
+		<param name="port" value="X3" /><param name="mask" value="0x10" /><param name="a" value="l_semi" /><param name="s" value="l_plus" />
 		<group ref="key_shifted"><bounds x="976.5" y="1380" width="71" height="71" /></group>
-		<param name="port" value="X3" /><param name="mask" value="0x1000" /><param name="a" value="w_RUB" /><param name="b" value="w_OUT" />
+		<param name="port" value="X3" /><param name="mask" value="0x08" /><param name="a" value="w_RUB" /><param name="b" value="w_OUT" />
 		<group ref="key_words"><bounds x="1051.5" y="1380" width="71" height="71" /></group>
-		<param name="port" value="MODIFIERS" /><param name="mask" value="0x08" /><param name="a" value="w_REPT" />
+		<param name="port" value="MODS" /><param name="mask" value="0x08" /><param name="a" value="w_REPT" />
 		<group ref="key_word"><bounds x="1126.5" y="1380" width="71" height="71" /></group>
-		<param name="port" value="X4" /><param name="mask" value="0x08" /><param name="a" value="a_left" />
+		<param name="port" value="FUNC" /><param name="mask" value="0x004" /><param name="a" value="a_left" />
 		<group ref="key"><bounds x="1201.5" y="1380" width="71" height="71" /></group>
-		<param name="port" value="X4" /><param name="mask" value="0x10" /><param name="a" value="a_right" />
+		<param name="port" value="FUNC" /><param name="mask" value="0x008" /><param name="a" value="a_right" />
 		<group ref="key"><bounds x="1276.5" y="1380" width="71" height="71" /></group>
 
 		<!-- SHIFT to down cursor -->
-		<param name="port" value="MODIFIERS" /><param name="mask" value="0x01" /><param name="a" value="w_SHIFT" />
+		<param name="port" value="MODS" /><param name="mask" value="0x02" /><param name="a" value="w_SHIFT" />
 		<group ref="key_word"><bounds x="264" y="1455" width="71" height="71" /></group>
-		<param name="port" value="X3" />
-		<param name="mask" value="0x0001" /><param name="a" value="l_Z" />
+		<param name="port" value="X9" /><param name="mask" value="0x20" /><param name="a" value="l_Z" />
 		<group ref="key"><bounds x="339" y="1455" width="71" height="71" /></group>
-		<param name="mask" value="0x0002" /><param name="a" value="l_X" />
+		<param name="port" value="X8" /><param name="mask" value="0x20" /><param name="a" value="l_X" />
 		<group ref="key"><bounds x="414" y="1455" width="71" height="71" /></group>
-		<param name="mask" value="0x0004" /><param name="a" value="l_C" />
+		<param name="port" value="X7" /><param name="mask" value="0x20" /><param name="a" value="l_C" />
 		<group ref="key"><bounds x="489" y="1455" width="71" height="71" /></group>
-		<param name="mask" value="0x0008" /><param name="a" value="l_V" />
+		<param name="port" value="X6" /><param name="mask" value="0x20" /><param name="a" value="l_V" />
 		<group ref="key"><bounds x="564" y="1455" width="71" height="71" /></group>
-		<param name="mask" value="0x0010" /><param name="a" value="l_B" />
+		<param name="port" value="X6" /><param name="mask" value="0x40" /><param name="a" value="l_B" />
 		<group ref="key"><bounds x="639" y="1455" width="71" height="71" /></group>
-		<param name="mask" value="0x0020" /><param name="a" value="l_N" /><param name="s" value="a_up" />
+		<param name="port" value="X5" /><param name="mask" value="0x40" /><param name="a" value="l_N" /><param name="s" value="a_up" />
 		<group ref="key_shifted"><bounds x="714" y="1455" width="71" height="71" /></group>
-		<param name="mask" value="0x0040" /><param name="a" value="l_M" /><param name="s" value="l_rbracket" />
+		<param name="port" value="X5" /><param name="mask" value="0x20" /><param name="a" value="l_M" /><param name="s" value="l_rbracket" />
 		<group ref="key_shifted"><bounds x="789" y="1455" width="71" height="71" /></group>
-		<param name="mask" value="0x0080" /><param name="a" value="l_comma" /><param name="s" value="l_less" />
+		<param name="port" value="X4" /><param name="mask" value="0x20" /><param name="a" value="l_comma" /><param name="s" value="l_less" />
 		<group ref="key_shifted"><bounds x="864" y="1455" width="71" height="71" /></group>
-		<param name="mask" value="0x0100" /><param name="a" value="l_period" /><param name="s" value="l_greater" />
+		<param name="port" value="X4" /><param name="mask" value="0x40" /><param name="a" value="l_period" /><param name="s" value="l_greater" />
 		<group ref="key_shifted"><bounds x="939" y="1455" width="71" height="71" /></group>
-		<param name="mask" value="0x0200" /><param name="a" value="l_slash" /><param name="s" value="l_question" />
+		<param name="port" value="X3" /><param name="mask" value="0x40" /><param name="a" value="l_slash" /><param name="s" value="l_question" />
 		<group ref="key_shifted"><bounds x="1014" y="1455" width="71" height="71" /></group>
-		<param name="port" value="MODIFIERS" /><param name="mask" value="0x02" /><param name="a" value="w_SHIFT" />
+		<param name="port" value="MODS" /><param name="mask" value="0x04" /><param name="a" value="w_SHIFT" />
 		<group ref="key_word"><bounds x="1089" y="1455" width="71" height="71" /></group>
-		<param name="port" value="X4" /><param name="mask" value="0x01" /><param name="a" value="w_HOME" />
+		<param name="port" value="FUNC" /><param name="mask" value="0x010" /><param name="a" value="w_HOME" />
 		<group ref="key_word"><bounds x="1164" y="1455" width="71" height="71" /></group>
-		<param name="port" value="X4" /><param name="mask" value="0x04" /><param name="a" value="a_down" />
+		<param name="port" value="FUNC" /><param name="mask" value="0x002" /><param name="a" value="a_down" />
 		<group ref="key"><bounds x="1239" y="1455" width="71" height="71" /></group>
 
-		<element ref="spacebar" inputtag="X3" inputmask="0x0400"><bounds x="489" y="1530" width="596" height="71" /></element>
+		<element ref="spacebar" inputtag="X2" inputmask="0x40"><bounds x="489" y="1530" width="596" height="71" /></element>
 	</group>
 
 	<group name="terminal">
